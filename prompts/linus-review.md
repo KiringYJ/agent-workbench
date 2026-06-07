@@ -41,7 +41,9 @@ Treat cleverness, abstraction, and configurability as liabilities until proven n
    - concurrency, ordering, lifetime, or ownership bugs,
    - user-visible compatibility breaks,
    - untested migration or config changes,
+   - repeated hard-coded paths, variables, constants, or arbitrary values that should be configuration,
    - unnecessary dependencies,
+   - "it just worked" fixes without proven root cause or targeted verification,
    - over-engineering or abstraction without current need.
 5. Separate evidence from inference. Cite files and lines when practical.
 6. Do not edit code unless the user explicitly asked for fixes.
@@ -68,6 +70,7 @@ Compatibility check:
 - API/CLI/config/output stability:
 
 Verification gaps:
+- Root cause proof:
 - Missing tests:
 - Commands that should be run:
 

@@ -6,15 +6,27 @@
 - Do not use broad staging commands such as `git add .` or `git add -A` unless the user explicitly asks and the diff has been reviewed.
 - Inspect `git status` and relevant diffs before committing or summarizing work.
 
+## Atomic Commit Discipline
+
+- Make one logical change per commit. Split unrelated fixes, refactors, dependency updates, formatting-only changes, and documentation updates unless they are necessary parts of the same intent.
+- Keep each commit atomic, reviewable, reversible, and bisectable.
+- Do not hide speculative cleanup inside a feature or bug-fix commit.
+
 ## History Safety
 
 - Do not run destructive history or working-tree commands (`git reset --hard`, `git clean`, force push, branch deletion, interactive rebase) unless explicitly authorized for the current task.
 - Do not bypass hooks or checks with `--no-verify`. If a hook fails, fix or document the underlying cause.
 - Keep commits focused and reversible.
 
+## Pre-commit Enforcement
+
+- Prefer project-scoped pre-commit hooks that enforce the project's formatter, linter, type checker, tests, and other required checks.
+- Keep hook commands deterministic, documented, and fast enough for routine commits; move long-running checks to CI when necessary.
+- Treat hook failures as evidence to investigate. Do not bypass them unless the user explicitly accepts the risk for that commit.
+
 ## Commit Messages
 
-All commits should use a Conventional Commit subject line and explain why the change exists, not just what files changed.
+Every commit must use a Conventional Commit subject line and explain why the change exists, not just what files changed.
 
 Subject format:
 

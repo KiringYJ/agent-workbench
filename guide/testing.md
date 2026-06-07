@@ -12,6 +12,12 @@ For feature work and bug fixes, prefer this loop:
 
 If the project lacks tests, use the lightest reliable verification available and state the gap.
 
+## Root Cause and Proof Discipline
+
+- For bug fixes, first reproduce or precisely characterize the failure, then identify the causal mechanism before changing behavior.
+- Test or justify each root-cause observation and rule out plausible alternatives. Do not accept "it just worked" as evidence of correctness.
+- Begin solution work only after the root cause is proven with complete confidence. If complete confidence is not currently possible, keep the change experimental, state the uncertainty, and avoid broad or irreversible edits.
+
 ## Verification Selection
 
 Choose verification proportional to risk:

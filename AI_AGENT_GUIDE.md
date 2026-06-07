@@ -26,9 +26,11 @@ All artifacts committed to a repository must be written in English: code, commen
 
 - Prefer evidence over assumption; inspect files and run verification before claiming completion.
 - Use the smallest reversible change that solves the real problem.
+- Prefer current stable stacks, toolchains, runtimes, language standards, and project scaffolding for new work or upgrades unless project constraints require an older version.
 - Preserve existing user behavior, public APIs, CLI flags, configuration formats, and machine-readable output unless the user explicitly requests a breaking change.
 - Keep diffs focused and bisectable.
 - Reuse existing project patterns before adding new abstractions.
+- Prefer pragmatic, justified correctness over "it just worked" fixes; every solution should have a clear causal explanation and verification evidence.
 - Do not add dependencies, services, code generators, plugins, marketplace entries, or global configuration without an explicit project decision.
 - Treat project-local instructions as authoritative over generic guidance when they conflict.
 
@@ -36,11 +38,12 @@ All artifacts committed to a repository must be written in English: code, commen
 
 1. Read the relevant instructions: `AI_AGENT_GUIDE.md` and `AI_AGENT_PROJECT.md` if present.
 2. Understand the task and inspect the current implementation before editing.
-3. For non-trivial work, state or internally maintain a short plan: files to change, verification to run, and risks.
-4. Make the minimal change.
-5. Run the documented verification commands from `AI_AGENT_PROJECT.md` when available.
-6. Review the diff for accidental edits, secrets, generated noise, and stale documentation.
-7. Report changed files, verification evidence, and any remaining risks.
+3. For bug fixes or incident-style problems, identify the root cause with evidence before designing the solution. Test or justify the observation, rule out plausible alternatives, and do not present a root-cause fix unless confidence is complete; otherwise keep diagnosing or label the remaining uncertainty.
+4. For non-trivial work, state or internally maintain a short plan: files to change, verification to run, and risks.
+5. Make the minimal change.
+6. Run the documented verification commands from `AI_AGENT_PROJECT.md` when available.
+7. Review the diff for accidental edits, secrets, generated noise, and stale documentation.
+8. Report changed files, verification evidence, and any remaining risks.
 
 ## Naming and Structure
 
@@ -49,6 +52,7 @@ All artifacts committed to a repository must be written in English: code, commen
 - Source modules represent concepts and should usually use singular names.
 - Data or collection directories that hold many peer files may use plural names.
 - Prefer simple, explicit control flow and early returns over deeply nested conditions.
+- Avoid hard-coded paths, variables, and constants. If a value appears repeatedly, is environment-specific, is arbitrary rather than canonical, or may change later, promote it to a named constant, configuration value, or documented boundary owned by the project.
 
 ## Output and Logging
 
@@ -64,6 +68,7 @@ Keep machine output and human diagnostics separate.
 Before adopting or changing a dependency or SDK:
 
 - Consult version-specific official documentation when possible.
+- Prefer the latest stable supported release and toolchain compatible with the project; avoid obsolete stacks unless a documented constraint requires them.
 - Confirm return values, error behavior, and edge cases with a minimal reproduction or test.
 - Pin versions according to the project language ecosystem.
 - Add or update integration tests when behavior crosses a boundary.
@@ -85,15 +90,27 @@ Treat `README.md` as user-facing product documentation. Keep it focused on what 
 - Do not use broad staging commands such as `git add .` or `git add -A` unless the user explicitly asks and the diff has been reviewed.
 - Inspect `git status` and relevant diffs before committing or summarizing work.
 
+## Atomic Commit Discipline
+
+- Make one logical change per commit. Split unrelated fixes, refactors, dependency updates, formatting-only changes, and documentation updates unless they are necessary parts of the same intent.
+- Keep each commit atomic, reviewable, reversible, and bisectable.
+- Do not hide speculative cleanup inside a feature or bug-fix commit.
+
 ## History Safety
 
 - Do not run destructive history or working-tree commands (`git reset --hard`, `git clean`, force push, branch deletion, interactive rebase) unless explicitly authorized for the current task.
 - Do not bypass hooks or checks with `--no-verify`. If a hook fails, fix or document the underlying cause.
 - Keep commits focused and reversible.
 
+## Pre-commit Enforcement
+
+- Prefer project-scoped pre-commit hooks that enforce the project's formatter, linter, type checker, tests, and other required checks.
+- Keep hook commands deterministic, documented, and fast enough for routine commits; move long-running checks to CI when necessary.
+- Treat hook failures as evidence to investigate. Do not bypass them unless the user explicitly accepts the risk for that commit.
+
 ## Commit Messages
 
-All commits should use a Conventional Commit subject line and explain why the change exists, not just what files changed.
+Every commit must use a Conventional Commit subject line and explain why the change exists, not just what files changed.
 
 Subject format:
 
@@ -188,6 +205,12 @@ For feature work and bug fixes, prefer this loop:
 
 If the project lacks tests, use the lightest reliable verification available and state the gap.
 
+## Root Cause and Proof Discipline
+
+- For bug fixes, first reproduce or precisely characterize the failure, then identify the causal mechanism before changing behavior.
+- Test or justify each root-cause observation and rule out plausible alternatives. Do not accept "it just worked" as evidence of correctness.
+- Begin solution work only after the root cause is proven with complete confidence. If complete confidence is not currently possible, keep the change experimental, state the uncertainty, and avoid broad or irreversible edits.
+
 ## Verification Selection
 
 Choose verification proportional to risk:
@@ -222,8 +245,10 @@ For each meaningful change, ask:
 - Are tests or verification appropriate for the risk?
 - Are documentation and examples still accurate?
 - Are new abstractions justified by current duplication, performance evidence, or clear boundary needs?
+- Are repeated or non-canonical values hard-coded when they should be constants, configuration, or documented project boundaries?
 - Are error paths and edge cases explicit?
 - Are performance claims backed by measurements?
+- Is the root cause proven, or is the change merely an "it just worked" workaround?
 - Did any generated, local, or secret file get touched accidentally?
 
 ## NACK Triggers
@@ -234,6 +259,8 @@ Treat these as blockers unless the user explicitly accepts the risk:
 - Broad rewrite when a small fix would work.
 - New dependency without a clear reason and version pinning.
 - Optimization without measurements.
+- "It just worked" fixes without a proven root cause, targeted verification, or a clear correctness argument.
+- Repeated hard-coded paths, values, variables, or constants that are arbitrary, environment-specific, or likely to change.
 - Large duplicated guide content in vendor-specific entrypoints.
 - Agent sync changing application source code.
 
