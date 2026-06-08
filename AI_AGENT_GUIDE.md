@@ -2,7 +2,6 @@
 agent-workbench: managed
 source: KiringYJ/agent-workbench
 profile: base
-updated: 0.4.0
 manual-edits: preserve-marked-sections-only
 -->
 

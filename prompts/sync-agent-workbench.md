@@ -116,7 +116,6 @@ The top metadata marker must be:
 agent-workbench: managed
 source: <repo-or-url>
 profile: <profile-name>
-updated: <date-or-version>
 manual-edits: preserve-marked-sections-only
 -->
 ```
@@ -129,7 +128,7 @@ Rules:
   - `<!-- agent-workbench:manual-end -->`
 - Put preserved manual blocks near the top under a `## Preserved Manual Notes` heading, or leave them where the template indicates manual blocks.
 - Do not preserve unmarked manual edits in `AI_AGENT_GUIDE.md`; tell the user that only marked blocks are retained.
-- The result must be idempotent: running sync again with the same inputs should produce the same file except for an intentional date/version value.
+- The result must be idempotent: running sync again with the same inputs should produce the same file.
 
 ## AI_AGENT_PROJECT.md
 

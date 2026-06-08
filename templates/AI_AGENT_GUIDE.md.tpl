@@ -2,7 +2,6 @@
 agent-workbench: managed
 source: {{source}}
 profile: {{profile}}
-updated: {{updated}}
 manual-edits: preserve-marked-sections-only
 -->
 
