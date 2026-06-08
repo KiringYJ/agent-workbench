@@ -15,6 +15,8 @@ A sync creates a small set of agent instruction files in your project:
 - `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` — thin entrypoints for vendor tools.
 - Optional project-scoped agent config and portable workflows under `.agents/`.
 
+By default, those files are a reproducible workspace overlay: store them on an orphan `workspace-config` branch, restore them into local worktrees when needed, and keep them ignored locally with `.git/info/exclude` so `main`, `dev`, and feature branches stay product-only.
+
 It does **not** require marketplace installs, global configuration, git submodules, plugins, or machine-local paths.
 
 ## Quick start
@@ -26,6 +28,7 @@ Follow the agent-workbench sync prompt at:
 https://raw.githubusercontent.com/KiringYJ/agent-workbench/main/prompts/sync-agent-workbench.md
 
 Run a full sync with the <profile> profile.
+Use the `workspace-config` orphan branch design for agent/editor workspace files.
 Do not modify application source code.
 Do not install dependencies, plugins, marketplaces, global config, or submodules.
 ```
@@ -78,6 +81,8 @@ Do not modify application source code.
 ## What sync is allowed to change
 
 Sync is intentionally narrow. It may update agent instruction files, project-scoped agent configuration, and registered portable workflows. It must not change application source code, dependencies, global/user configuration, marketplace/plugin installation state, or git submodules.
+
+In Git repositories, sync should also maintain local `.git/info/exclude` entries for workspace-overlay paths and should version those paths on `workspace-config`, never by merging that branch into product branches.
 
 `AI_AGENT_PROJECT.md` is created if missing, but after that it belongs to your project and should be edited by hand.
 

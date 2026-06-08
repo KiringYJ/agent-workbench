@@ -7,6 +7,7 @@ profile: base
 modules:
   - base
   - git
+  - workspace-config
   - security
   - testing
   - review

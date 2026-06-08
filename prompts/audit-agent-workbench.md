@@ -66,6 +66,13 @@ Do not modify files in audit mode. Inspect and report only.
    - No global or user-scope configuration is required.
    - No `AGENT.md` typo exists as the primary entrypoint.
 
+11. Workspace-config orphan branch policy
+   - If the repository uses Git, `workspace-config` exists as the workspace-overlay branch or `AI_AGENT_PROJECT.md` documents an explicit opt-out.
+   - `workspace-config` has not been merged into `main`, `dev`, or product feature branches when this can be checked safely.
+   - Workspace-overlay paths are not tracked on product branches unless `AI_AGENT_PROJECT.md` documents a project-wide exception.
+   - `.git/info/exclude` contains local excludes for restored workspace-overlay paths.
+   - Workspace files that physically exist in a product worktree are ignored locally rather than added to project `.gitignore`, unless the project intentionally makes them policy.
+
 ## Output
 
 Return a structured report:

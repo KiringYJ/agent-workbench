@@ -25,6 +25,8 @@ If the user does not specify a mode, use **full sync**. If the user specifies a 
 - Do not create git submodules.
 - Do not rely on machine-local absolute paths.
 - Do not create `AGENT.md`; the correct file is `AGENTS.md`.
+- Do not merge, rebase, or cherry-pick `workspace-config` wholesale into `main`, `dev`, or product feature branches.
+- Do not stage or commit workspace-only agent/editor configuration on product branches unless the project explicitly documents that path as project-wide policy.
 - Only update these files unless the user explicitly authorizes more:
   - `AI_AGENT_GUIDE.md`
   - `AI_AGENT_PROJECT.md` only when missing
@@ -38,13 +40,51 @@ If the user does not specify a mode, use **full sync**. If the user specifies a 
   - `.agents/skills/<registered-skill>/SKILL.md`
   - `.agents/skills/<registered-skill>/scripts/**`, `.agents/skills/<registered-skill>/references/**`, and `.agents/skills/<registered-skill>/assets/**` when present in the workbench source
   - `.claude/skills/<registered-skill>/SKILL.md` when the Claude target is enabled and the capability target requests a Claude generated skill surface
+  - local `.git/info/exclude` entries for the workspace-overlay paths listed in this prompt, when the repository uses Git
+
+## Workspace-config orphan branch policy
+
+Agent-workbench managed files are workspace overlay by default. In Git repositories, store them on a dedicated orphan branch named `workspace-config` and keep product branches clean unless `AI_AGENT_PROJECT.md` explicitly documents a project-wide exception.
+
+Required invariant:
+
+```text
+workspace-config must never be merged, rebased, or cherry-picked wholesale into main, dev, or product feature branches.
+```
+
+Before writing files in a consumer Git repository:
+
+1. Detect the current branch and existing tracked files with `git status --short`, `git branch --show-current`, and `git ls-files -- <workspace-paths>`.
+2. Treat `main`, `dev`, and `feature/*` as product branches unless the project documents different branch names.
+3. Ensure product worktrees locally exclude workspace-overlay paths through `.git/info/exclude`, not project `.gitignore`.
+4. If workspace-overlay files are already tracked on a product branch, do not silently remove them from the index. Report the migration command (`git rm --cached ...`) unless the user explicitly requested migration/repair.
+5. Generate or refresh the workspace files in the working tree, but do not stage them to a product branch.
+6. To version workspace changes, create or update `workspace-config` through a temporary worktree. Push only when the user explicitly requested remote publication or already asked for publish/push.
+
+Default agent-workbench workspace-overlay paths:
+
+```text
+AI_AGENT_GUIDE.md
+AI_AGENT_PROJECT.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.agent-workbench.yaml
+.agents/
+.codex/
+.claude/
+opencode.json
+```
+
+Optional local workspace paths such as `.agent/`, `.cursor/`, `.vscode/`, `prompts/`, or `scripts/` may also use the branch, but only after confirming they are not product-owned. If a path is intentionally shared with all contributors, document that exception in `AI_AGENT_PROJECT.md` and treat it as project policy rather than workspace overlay.
 
 ## Inputs to read
 
 1. Inspect the consumer repository root.
 2. Read `.agent-workbench.yaml` if present.
 3. Read existing managed files if present, especially `AI_AGENT_GUIDE.md`, to preserve manual blocks.
-4. Read the workbench source files from the current checkout or from `KiringYJ/agent-workbench` if the user references the repository remotely:
+4. If the repository uses Git, inspect the current branch, whether `workspace-config` exists, local `.git/info/exclude`, and whether workspace-overlay paths are tracked on the current branch.
+5. Read the workbench source files from the current checkout or from `KiringYJ/agent-workbench` if the user references the repository remotely:
    - `manifest.yaml`
    - selected `profiles/*.yaml`
    - selected `guide/**/*.md`
@@ -182,4 +222,5 @@ End with a concise diff-style summary:
 - Manual blocks preserved.
 - Portable prompts and skills synced or skipped.
 - Any parse errors, skipped modules, or assumptions.
+- Workspace-config branch status, product-branch tracking exceptions, and whether `.git/info/exclude` was updated.
 - Confirmation that no application source code, dependencies, global config, marketplace, plugin installation, or submodule was modified.

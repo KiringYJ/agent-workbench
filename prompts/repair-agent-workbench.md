@@ -20,8 +20,10 @@ You may create or repair only:
 - `.agents/skills/<registered-skill>/SKILL.md`
 - Registered skill resources under `.agents/skills/<registered-skill>/scripts/`, `references/`, and `assets/` when present in the workbench source
 - `.claude/skills/<registered-skill>/SKILL.md` when the Claude target is enabled and the capability target requests a Claude generated skill surface
+- local `.git/info/exclude` entries for workspace-overlay paths when the repository uses Git
 
 Do not modify application source code. Do not install dependencies, plugins, marketplaces, submodules, global configuration, or user-scope settings.
+Never merge, rebase, or cherry-pick `workspace-config` wholesale into `main`, `dev`, or product feature branches.
 
 ## Repair process
 
@@ -49,6 +51,11 @@ Do not modify application source code. Do not install dependencies, plugins, mar
    - Preserve unregistered local prompts and skills.
    - Prefer real copied files over symlinks.
    - Do not create other vendor-specific mirrors unless the user explicitly requests them.
+11. Repair workspace-config hygiene:
+   - If the repository uses Git, add missing workspace-overlay paths to `.git/info/exclude`.
+   - If workspace-overlay files are tracked on a product branch, report the exact `git rm --cached ...` migration command. Run it only when the user explicitly requested migration from product-branch tracking.
+   - Create or refresh the `workspace-config` orphan branch only when the user requested workspace-config setup or migration.
+   - Do not push `workspace-config` unless the user explicitly requested remote publication or already asked for push/publish.
 
 ## Malformed config handling
 
@@ -69,4 +76,5 @@ Summarize:
 - Portable prompts and skills repaired.
 - Backups created.
 - Any assumptions or unresolved issues.
+- Workspace-config branch and `.git/info/exclude` repair status.
 - Confirmation that no application source code or global configuration was changed.

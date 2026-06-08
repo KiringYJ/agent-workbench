@@ -6,6 +6,8 @@ modules:
     path: guide/base.md
   git:
     path: guide/git.md
+  workspace-config:
+    path: guide/workspace-config.md
   security:
     path: guide/security.md
   testing:

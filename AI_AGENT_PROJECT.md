@@ -39,6 +39,12 @@ For prompt/template edits, also verify that `manifest.yaml` references existing 
 - **Thin entrypoint**: vendor-specific file that points to the canonical guides without duplicating them.
 - **Profile**: YAML selection of modules for a language or project type.
 
+## Workspace Configuration
+
+This repository is the source workbench whose product is reusable agent guidance, templates, prompts, skills, and capability metadata. It intentionally tracks those source artifacts on `main`.
+
+Consumer projects should use the `workspace-config` orphan branch design for local agent/editor workspace overlays unless they document a project-wide exception.
+
 ## Commit Message Requirements
 
 All commits in this repository must use a Conventional Commit subject line and preserve the Lore trailer format for decision context.
