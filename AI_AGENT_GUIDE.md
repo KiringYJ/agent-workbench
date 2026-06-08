@@ -170,7 +170,7 @@ Product branches must not track workspace-only files. Workspace files may physic
 
 ## What Belongs in `workspace-config`
 
-The branch is for reproducible local development setup, not product source code. Core agent-workbench overlay files include:
+The branch is for reproducible local development setup, not product source code. Core agent-workbench overlay files include the human config and the agent-owned provenance ledger:
 
 ```text
 AI_AGENT_GUIDE.md
@@ -179,6 +179,7 @@ AGENTS.md
 CLAUDE.md
 GEMINI.md
 .agent-workbench.yaml
+.agent-workbench.lock.json
 .agents/
 .codex/
 .claude/
@@ -218,7 +219,7 @@ Start only from a clean product worktree. If `git status --short` shows changes,
 Create or restore the workspace files, then commit them:
 
 ```bash
-git add AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agents .codex .claude opencode.json
+git add AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
 git commit -m "chore: add workspace config overlay"
 git push -u origin workspace-config
 ```
@@ -254,6 +255,7 @@ AGENTS.md
 CLAUDE.md
 GEMINI.md
 .agent-workbench.yaml
+.agent-workbench.lock.json
 .agents/
 .codex/
 .claude/
@@ -273,6 +275,7 @@ AGENTS.md
 CLAUDE.md
 GEMINI.md
 .agent-workbench.yaml
+.agent-workbench.lock.json
 .agents/
 .codex/
 .claude/
@@ -289,7 +292,7 @@ On a new machine or fresh clone:
 ```bash
 git clone <project-url> my-project
 cd my-project
-git restore --source=origin/workspace-config -- AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agents .codex .claude opencode.json
+git restore --source=origin/workspace-config -- AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
 ```
 
 Then add the local excludes shown above. After this, the workspace files physically exist in the product worktree but are not tracked by product branches.
@@ -305,13 +308,13 @@ git worktree add ../my-project-workspace-config workspace-config
 Copy the updated workspace files from the product worktree into that temporary worktree:
 
 ```bash
-cp -r AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agents .codex .claude opencode.json ../my-project-workspace-config/
+cp -r AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json ../my-project-workspace-config/
 ```
 
 PowerShell alternative:
 
 ```powershell
-Copy-Item -Recurse -Force AI_AGENT_GUIDE.md, AI_AGENT_PROJECT.md, AGENTS.md, CLAUDE.md, GEMINI.md, .agent-workbench.yaml, .agents, .codex, .claude, opencode.json ..\my-project-workspace-config\
+Copy-Item -Recurse -Force AI_AGENT_GUIDE.md, AI_AGENT_PROJECT.md, AGENTS.md, CLAUDE.md, GEMINI.md, .agent-workbench.yaml, .agent-workbench.lock.json, .agents, .codex, .claude, opencode.json ..\my-project-workspace-config\
 ```
 
 Commit from the temporary worktree:
@@ -326,7 +329,7 @@ git push
 Refresh local workspace files in the product worktree:
 
 ```bash
-git restore --source=origin/workspace-config -- AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agents .codex .claude opencode.json
+git restore --source=origin/workspace-config -- AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
 ```
 
 ## If Workspace Files Are Already Tracked on a Product Branch
@@ -334,11 +337,11 @@ git restore --source=origin/workspace-config -- AI_AGENT_GUIDE.md AI_AGENT_PROJE
 Remove them from the product branch index while preserving the physical files:
 
 ```bash
-git rm -r --cached AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agents .codex .claude opencode.json
+git rm -r --cached AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
 git commit -m "chore: stop tracking local workspace config"
 ```
 
-Then ensure `.git/info/exclude` contains those paths and commit the files on `workspace-config`.
+Then ensure `.git/info/exclude` contains those paths and commit the files on `workspace-config`. The `.agent-workbench.lock.json` file belongs with this overlay because it records the last sync baseline used to detect confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, local unmanaged artifacts, and retainedRemovals context.
 
 ## Agent Rules
 
@@ -387,11 +390,12 @@ The sync process may update only:
 - `opencode.json`
 - `.codex/config.toml`
 - `.agent-workbench.yaml`
+- `.agent-workbench.lock.json` provenance ledger
 - Registered portable prompts under `.agents/prompts/`
 - Registered portable skills under `.agents/skills/`
 - Generated Claude project skills under `.claude/skills/` when the Claude target is enabled
 
-Any broader edit requires explicit user authorization.
+Any broader edit requires explicit user authorization. Sync may classify generated artifacts as confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, or local unmanaged, but it must not delete downstream artifacts without explicit user confirmation. Deletion candidates must be normalized, allowlisted workspace-overlay paths; local/unmanaged artifacts are preserved by default, and kept removals should be recorded in `retainedRemovals`.
 
 ## High-Risk Operations
 
@@ -503,6 +507,7 @@ The canonical capability is the source of truth. Vendor-native skills, commands,
 - `.agents/skills/` stores portable Agent Skills using `SKILL.md` folders.
 - `.agents/guardrails/` stores vendor-neutral guardrail rule documents.
 - `capabilities/<name>/capability.yaml` records the portability level, canonical skill/prompt files, vendor outputs, and official-preferred fallbacks.
+- `.agent-workbench.lock.json` records agent-owned sync provenance: source commit, manifest digest, scoped baselines, installed artifacts, and retained removals. Keep `.agent-workbench.yaml` as human-owned desired configuration.
 
 Vendor-native discovery paths such as `.codex/skills/`, `.gemini/skills/`, `.claude/commands/`, `.gemini/commands/`, or hook config files may be generated as optional mirrors only when the project explicitly wants them. The canonical source remains under `.agents/`.
 
@@ -530,6 +535,10 @@ Each project should have these workflows available after sync:
 
 ## Portability Rules
 
+- Treat install as the first sync. The same sync workflow should detect new, legacy/no-lockfile, and already-managed repositories.
+- Use `.agent-workbench.lock.json` as a provenance/baseline ledger, not a package-manager lockfile. Use it with the current desired set to detect removed or deselected managed artifacts.
+- Classify sync drift with explicit statuses: confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, and local unmanaged.
+- Never delete generated downstream artifacts without explicit user confirmation. If a user keeps a removed artifact, record that decision in `retainedRemovals` so future syncs preserve context.
 - Do not make a consumer project depend on a marketplace, global extension, user-scope config, or machine-local absolute path to get these workflows.
 - Prefer a prompt or portable skill first unless the capability is marked `official-preferred` for the active vendor.
 - Use vendor-specific hooks, slash commands, plugins, or extensions as generated adapters only.

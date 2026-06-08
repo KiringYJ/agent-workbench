@@ -14,6 +14,7 @@ A sync creates a small set of agent instruction files in your project:
 - `AI_AGENT_PROJECT.md` — your manually maintained project-specific notes.
 - `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` — thin entrypoints for vendor tools.
 - Optional project-scoped agent config and portable workflows under `.agents/`.
+- `.agent-workbench.lock.json` — an agent-owned provenance ledger that records the last successful sync baseline.
 
 By default, those files are a reproducible workspace overlay: store them on an orphan `workspace-config` branch, restore them into local worktrees when needed, and keep them ignored locally with `.git/info/exclude` so `main`, `dev`, and feature branches stay product-only.
 
@@ -42,7 +43,7 @@ Choose one of these profiles:
 | `python` | The project is primarily Python. |
 | `typescript` | The project is primarily TypeScript or JavaScript. |
 
-After the first sync, fill in `AI_AGENT_PROJECT.md` with your project's architecture, build commands, test commands, important files, domain terms, and project-specific constraints.
+Install is the first sync: the same workflow creates missing files, writes `.agent-workbench.yaml` as human-owned desired configuration, and writes `.agent-workbench.lock.json` as the agent-owned sync baseline. After the first sync, fill in `AI_AGENT_PROJECT.md` with your project's architecture, build commands, test commands, important files, domain terms, and project-specific constraints.
 
 ## Common tasks
 
@@ -54,6 +55,7 @@ https://raw.githubusercontent.com/KiringYJ/agent-workbench/main/prompts/sync-age
 
 Run a full sync using the existing .agent-workbench.yaml profile.
 Preserve AI_AGENT_PROJECT.md and marked manual blocks.
+Use .agent-workbench.lock.json to detect upstream-removed managed artifacts and ask before deleting anything.
 Do not modify application source code.
 ```
 
@@ -80,11 +82,11 @@ Do not modify application source code.
 
 ## What sync is allowed to change
 
-Sync is intentionally narrow. It may update agent instruction files, project-scoped agent configuration, and registered portable workflows. It must not change application source code, dependencies, global/user configuration, marketplace/plugin installation state, or git submodules.
+Sync is intentionally narrow. It may update agent instruction files, project-scoped agent configuration, `.agent-workbench.lock.json`, and registered portable workflows. It must not change application source code, dependencies, global/user configuration, marketplace/plugin installation state, or git submodules.
 
-In Git repositories, sync should also maintain local `.git/info/exclude` entries for workspace-overlay paths and should version those paths on `workspace-config`, never by merging that branch into product branches.
+In Git repositories, sync should also maintain local `.git/info/exclude` entries for workspace-overlay paths and should version those paths, including `.agent-workbench.lock.json`, on `workspace-config`, never by merging that branch into product branches.
 
-`AI_AGENT_PROJECT.md` is created if missing, but after that it belongs to your project and should be edited by hand.
+`AI_AGENT_PROJECT.md` is created if missing, but after that it belongs to your project and should be edited by hand. Sync may report **confirmed upstream removal**, **confirmed removal with local edits**, **suspected legacy removal**, **deselected by local config**, **source changed / migration required**, or **local unmanaged** findings. It must ask before deleting downstream artifacts and should record kept obsolete artifacts in `retainedRemovals`.
 
 ## For maintainers of this repository
 

@@ -28,11 +28,12 @@ The sync process may update only:
 - `opencode.json`
 - `.codex/config.toml`
 - `.agent-workbench.yaml`
+- `.agent-workbench.lock.json` provenance ledger
 - Registered portable prompts under `.agents/prompts/`
 - Registered portable skills under `.agents/skills/`
 - Generated Claude project skills under `.claude/skills/` when the Claude target is enabled
 
-Any broader edit requires explicit user authorization.
+Any broader edit requires explicit user authorization. Sync may classify generated artifacts as confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, or local unmanaged, but it must not delete downstream artifacts without explicit user confirmation. Deletion candidates must be normalized, allowlisted workspace-overlay paths; local/unmanaged artifacts are preserved by default, and kept removals should be recorded in `retainedRemovals`.
 
 ## High-Risk Operations
 

@@ -18,6 +18,7 @@ The canonical capability is the source of truth. Vendor-native skills, commands,
 - `.agents/skills/` stores portable Agent Skills using `SKILL.md` folders.
 - `.agents/guardrails/` stores vendor-neutral guardrail rule documents.
 - `capabilities/<name>/capability.yaml` records the portability level, canonical skill/prompt files, vendor outputs, and official-preferred fallbacks.
+- `.agent-workbench.lock.json` records agent-owned sync provenance: source commit, manifest digest, scoped baselines, installed artifacts, and retained removals. Keep `.agent-workbench.yaml` as human-owned desired configuration.
 
 Vendor-native discovery paths such as `.codex/skills/`, `.gemini/skills/`, `.claude/commands/`, `.gemini/commands/`, or hook config files may be generated as optional mirrors only when the project explicitly wants them. The canonical source remains under `.agents/`.
 
@@ -45,6 +46,10 @@ Each project should have these workflows available after sync:
 
 ## Portability Rules
 
+- Treat install as the first sync. The same sync workflow should detect new, legacy/no-lockfile, and already-managed repositories.
+- Use `.agent-workbench.lock.json` as a provenance/baseline ledger, not a package-manager lockfile. Use it with the current desired set to detect removed or deselected managed artifacts.
+- Classify sync drift with explicit statuses: confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, and local unmanaged.
+- Never delete generated downstream artifacts without explicit user confirmation. If a user keeps a removed artifact, record that decision in `retainedRemovals` so future syncs preserve context.
 - Do not make a consumer project depend on a marketplace, global extension, user-scope config, or machine-local absolute path to get these workflows.
 - Prefer a prompt or portable skill first unless the capability is marked `official-preferred` for the active vendor.
 - Use vendor-specific hooks, slash commands, plugins, or extensions as generated adapters only.
