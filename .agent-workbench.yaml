@@ -6,6 +6,7 @@ profile: base
 
 modules:
   - base
+  - prompting
   - git
   - workspace-config
   - security

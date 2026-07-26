@@ -2,7 +2,22 @@
 
 # Sync Agent Workbench Prompt
 
-Use this prompt to synchronize a consumer repository with the vendor-neutral `agent-workbench` model. This is an LLM-executed workflow; it does not require a custom CLI, marketplace, plugin, submodule, global configuration, or machine-local path.
+Use this LLM-executed workflow to synchronize a consumer repository with the vendor-neutral `agent-workbench` model.
+
+## Outcome and completion contract
+
+Reconcile the requested workbench scopes with the resolved source, profile, manifest, and templates while preserving project-owned content and keeping application code outside the sync.
+
+A sync is complete when:
+
+- the selected profile and every selected module resolve to registered, existing files;
+- the active scopes match the resolved workbench source;
+- `AI_AGENT_PROJECT.md`, marked manual blocks, unrelated config, and unregistered local workflows are preserved;
+- the provenance ledger advances only for scopes that completed successfully;
+- relevant parse, path-safety, idempotence, and Git diff checks pass; and
+- the final report identifies changed, preserved, skipped, and blocked items.
+
+Reading files, generating or updating allowed local artifacts, maintaining local excludes, and running non-destructive validation are authorized by a sync request. Ask only when deletion, destructive Git work, source migration, malformed-state recovery, unrequested remote publication, or a material expansion of scope requires a user decision. Stop after the completion criteria are met.
 
 ## Supported natural-language modes
 
@@ -15,7 +30,7 @@ Interpret the user's request and select one mode:
 - **audit-only mode**: inspect and report; do not modify files.
 - **repair missing files**: create or repair missing/malformed instruction/config files while preserving manual content.
 
-If the user does not specify a mode, use **full sync**. If the user asks to install agent-workbench, treat install as the first sync: run the same workflow, create missing config/artifacts, and write the first provenance ledger. If the user specifies a profile (for example `rust`, `python`, or `typescript`), set that profile in `.agent-workbench.yaml` and include its modules.
+If the user does not specify a mode, use **full sync**. If the user asks to install agent-workbench, treat install as the first sync: run the same workflow, create missing config/artifacts, and write the first provenance ledger. If the user specifies a profile (for example `rust`, `python`, `typescript`, `research`, or `tex`), set that profile in `.agent-workbench.yaml` and include its inherited modules.
 
 ## Hard safety rules
 
@@ -336,6 +351,7 @@ Rules:
 End with a concise diff-style summary:
 
 - Mode and profile used.
+- Completion evidence: manifest/profile path validation, config parse results, idempotence or repeat-run status, and Git diff/status checks.
 - Files created.
 - Files updated.
 - Files intentionally left unchanged, especially `AI_AGENT_PROJECT.md`.

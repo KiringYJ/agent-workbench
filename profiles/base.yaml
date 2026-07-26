@@ -2,6 +2,7 @@ extends: null
 
 modules:
   - base
+  - prompting
   - git
   - workspace-config
   - security

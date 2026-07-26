@@ -1,0 +1,4 @@
+extends: research
+
+modules:
+  - languages/tex

@@ -6,8 +6,11 @@
 - If sensitive material appears in the working tree, stop and report it without copying the secret into logs or summaries.
 - Do not print secret values. Redact them when context is necessary.
 
-## Scope Boundaries
+## Action and Scope Boundaries
 
+- For requests to answer, explain, review, diagnose, or plan, inspect the relevant material and report the result. Do not implement changes unless the request also asks for them.
+- For requests to change, build, or fix, make the requested in-scope local changes and run relevant non-destructive validation without asking first.
+- Require confirmation for external writes, destructive or irreversible actions, purchases or other material costs, credential-gated actions, or a material expansion of scope.
 - Modify only files relevant to the requested task.
 - Do not modify application source code during an agent-workbench sync unless the user separately requests application changes.
 - Do not install dependencies, plugins, marketplaces, extensions, or global/user-scope configuration as part of instruction sync.
@@ -34,7 +37,3 @@ The sync process may update only:
 - Generated Claude project skills under `.claude/skills/` when the Claude target is enabled
 
 Any broader edit requires explicit user authorization. Sync may classify generated artifacts as confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, or local unmanaged, but it must not delete downstream artifacts without explicit user confirmation. Deletion candidates must be normalized, allowlisted workspace-overlay paths; local/unmanaged artifacts are preserved by default, and kept removals should be recorded in `retainedRemovals`.
-
-## High-Risk Operations
-
-Ask for explicit confirmation before destructive, irreversible, production-affecting, or credential-dependent operations. If a safe read-only inspection can answer the question, do that first.

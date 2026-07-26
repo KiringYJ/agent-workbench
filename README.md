@@ -20,6 +20,8 @@ By default, those files are a reproducible workspace overlay: store them on an o
 
 It does **not** require marketplace installs, global configuration, git submodules, plugins, or machine-local paths.
 
+The base profile includes compact, outcome-oriented prompt guidance derived from OpenAI's current [GPT-5.6 model guidance](https://developers.openai.com/api/docs/guides/model-guidance?model=gpt-5.6): state the goal, context, constraints, required evidence, success criteria, and output contract; keep autonomy boundaries in one place; and validate prompt changes on representative work. The canonical guidance remains vendor-neutral, so model-specific reasoning, verbosity, caching, and execution modes stay in vendor configuration.
+
 ## Quick start
 
 Open your target project in an AI coding agent, then ask it to run the sync prompt:
@@ -39,9 +41,13 @@ Choose one of these profiles:
 | Profile | Use when |
 | --- | --- |
 | `base` | You want general agent guidance without language-specific rules. |
+| `research` | You need rigorous, source-backed research with explicit evidence, citation, uncertainty, and reproducibility standards. |
+| `tex` | You work on TeX/LaTeX manuscripts and want the `research` profile plus source, bibliography, compile, log, and render checks. |
 | `rust` | The project is primarily Rust. |
 | `python` | The project is primarily Python. |
 | `typescript` | The project is primarily TypeScript or JavaScript. |
+
+`research` extends `base`, and `tex` extends `research`. The language profiles extend `base`.
 
 Install is the first sync: the same workflow creates missing files, writes `.agent-workbench.yaml` as human-owned desired configuration, and writes `.agent-workbench.lock.json` as the agent-owned sync baseline. After the first sync, fill in `AI_AGENT_PROJECT.md` with your project's architecture, build commands, test commands, important files, domain terms, and project-specific constraints.
 

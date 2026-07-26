@@ -3,6 +3,8 @@ name: agent-workbench
 modules:
   base:
     path: guide/base.md
+  prompting:
+    path: guide/prompting.md
   git:
     path: guide/git.md
   workspace-config:
@@ -15,12 +17,16 @@ modules:
     path: guide/review.md
   workflows:
     path: guide/workflows.md
+  domains/research:
+    path: guide/domains/research.md
   languages/rust:
     path: guide/languages/rust.md
   languages/python:
     path: guide/languages/python.md
   languages/typescript:
     path: guide/languages/typescript.md
+  languages/tex:
+    path: guide/languages/tex.md
   tools/claude:
     path: guide/tools/claude.md
   tools/codex:
@@ -39,6 +45,10 @@ profiles:
     path: profiles/python.yaml
   typescript:
     path: profiles/typescript.yaml
+  research:
+    path: profiles/research.yaml
+  tex:
+    path: profiles/tex.yaml
 
 templates:
   guide:
