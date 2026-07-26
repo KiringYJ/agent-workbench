@@ -30,13 +30,14 @@ Open your target project in an AI coding agent, then ask it to run the sync prom
 Follow the agent-workbench sync prompt at:
 https://raw.githubusercontent.com/KiringYJ/agent-workbench/main/prompts/sync-agent-workbench.md
 
-Run a full sync with the <profile> profile.
+Run a full sync. Inspect the project and choose the most appropriate available profile.
+If .agent-workbench.yaml already specifies a profile, keep using it.
 Use the `workspace-config` orphan branch design for agent/editor workspace files.
 Do not modify application source code.
 Do not install dependencies, plugins, marketplaces, global config, or submodules.
 ```
 
-Choose one of these profiles:
+The agent will choose from these profiles based on the project:
 
 | Profile | Use when |
 | --- | --- |
