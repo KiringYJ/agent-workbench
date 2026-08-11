@@ -17,8 +17,14 @@ modules:
     path: guide/review.md
   workflows:
     path: guide/workflows.md
+  domains/frontend:
+    path: guide/domains/frontend.md
   domains/research:
     path: guide/domains/research.md
+  frameworks/vue:
+    path: guide/frameworks/vue.md
+  frameworks/vuetify:
+    path: guide/frameworks/vuetify.md
   languages/rust:
     path: guide/languages/rust.md
   languages/python:
@@ -45,6 +51,12 @@ profiles:
     path: profiles/python.yaml
   typescript:
     path: profiles/typescript.yaml
+  frontend:
+    path: profiles/frontend.yaml
+  vue:
+    path: profiles/vue.yaml
+  vue-vuetify:
+    path: profiles/vue-vuetify.yaml
   research:
     path: profiles/research.yaml
   tex:

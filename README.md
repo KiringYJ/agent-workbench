@@ -47,8 +47,13 @@ The agent will choose from these profiles based on the project:
 | `rust` | The project is primarily Rust. |
 | `python` | The project is primarily Python. |
 | `typescript` | The project is primarily TypeScript or JavaScript. |
+| `frontend` | The project is a TypeScript/JavaScript browser UI and needs component, accessibility, responsive-input, service, and visual-verification guidance. |
+| `vue` | The frontend uses Vue 3 and needs Vue-specific component, reactivity, lifecycle, and verification guidance without assuming a UI library. |
+| `vue-vuetify` | The project uses Vue 3 and Vuetify and needs Vuetify-first, theme-aware, exact-version component guidance, including active use of `vuetify-mcp` when available. |
 
-`research` extends `base`, and `tex` extends `research`. The language profiles extend `base`.
+`research` extends `base`, and `tex` extends `research`. The language profiles extend `base`; `frontend` extends `typescript`, `vue` extends `frontend`, and `vue-vuetify` extends `vue`.
+
+Profiles are convenience compositions of independently registered modules. A non-Vue browser UI can select `frontend`, a Vue project without Vuetify can select `vue`, and only a project that actually uses Vuetify should select `vue-vuetify` or explicitly add the `frameworks/vuetify` module in `.agent-workbench.yaml`.
 
 Install is the first sync: the same workflow creates missing files, writes `.agent-workbench.yaml` as human-owned desired configuration, and writes `.agent-workbench.lock.json` as the agent-owned sync baseline. After the first sync, fill in `AI_AGENT_PROJECT.md` with your project's architecture, build commands, test commands, important files, domain terms, and project-specific constraints.
 

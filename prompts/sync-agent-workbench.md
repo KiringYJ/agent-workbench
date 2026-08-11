@@ -30,7 +30,7 @@ Interpret the user's request and select one mode:
 - **audit-only mode**: inspect and report; do not modify files.
 - **repair missing files**: create or repair missing/malformed instruction/config files while preserving manual content.
 
-If the user does not specify a mode, use **full sync**. If the user asks to install agent-workbench, treat install as the first sync: run the same workflow, create missing config/artifacts, and write the first provenance ledger. If the user specifies a profile (for example `rust`, `python`, `typescript`, `research`, or `tex`), set that profile in `.agent-workbench.yaml` and include its inherited modules.
+If the user does not specify a mode, use **full sync**. If the user asks to install agent-workbench, treat install as the first sync: run the same workflow, create missing config/artifacts, and write the first provenance ledger. If the user specifies a profile (for example `rust`, `python`, `typescript`, `frontend`, `vue`, `vue-vuetify`, `research`, or `tex`), set that profile in `.agent-workbench.yaml` and include its inherited modules.
 
 ## Hard safety rules
 

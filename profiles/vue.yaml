@@ -1,0 +1,4 @@
+extends: frontend
+
+modules:
+  - frameworks/vue
