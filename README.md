@@ -1,8 +1,8 @@
 # agent-workbench
 
-`agent-workbench` helps teams keep AI coding-agent instructions consistent across Claude Code, Codex, Gemini, OpenCode, and other agents.
+`agent-workbench` reproducibly assembles AI coding-agent policy for different kinds of projects from reusable modules and composable profiles.
 
-Use it when you want one project guide that every agent can read, instead of maintaining separate, duplicated instructions for each tool.
+It publishes one shared guide and standard Agent Skills for Claude Code, Codex, Gemini, OpenCode, and other agents, with only the small loader or discovery shims each runtime actually needs.
 
 > Historical note: this repository may still appear as `claude-workbench` in some checkouts, but the project is now vendor-neutral.
 
@@ -13,7 +13,8 @@ A sync creates a small set of agent instruction files in your project:
 - `AI_AGENT_GUIDE.md` — shared generated guidance for agents.
 - `AI_AGENT_PROJECT.md` — your manually maintained project-specific notes.
 - `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` — thin entrypoints for vendor tools.
-- Optional project-scoped agent config and portable workflows under `.agents/`.
+- Project-scoped prompts and canonical Agent Skills under `.agents/`.
+- Generated `.claude/skills/` discovery mirrors when the Claude target is enabled; Codex, Gemini, and OpenCode use `.agents/skills/` directly.
 - `.agent-workbench.lock.json` — an agent-owned provenance ledger that records the last successful sync baseline.
 
 By default, those files are repository-tracked project configuration. Keep them in normal branch history so a clone receives the complete workspace and `main` remains the single source of truth for both product code and shared agent/editor setup.
@@ -105,12 +106,14 @@ In Git repositories, sync should keep managed workspace paths visible to normal 
 Most users do not need the repository internals. If you are changing the workbench itself, start with:
 
 - `AI_AGENT_PROJECT.md` for project architecture and verification expectations.
-- `manifest.yaml` for registered modules, profiles, and templates.
-- `guide/`, `profiles/`, `templates/`, `prompts/`, `skills/`, and `capabilities/` for the source content used by sync.
+- `manifest.yaml` for registered modules, profiles, templates, prompts, and skills.
+- `guide/`, `profiles/`, `templates/`, `prompts/`, and `skills/` for the source content used by sync.
 
-For documentation-only changes, verify with:
+Verify changes with Ruby and Python 3.11 or newer; no third-party packages are required. The contract suite includes fixture-driven v1 ledger migration and managed-skill mirror checks:
 
 ```bash
+ruby -Itest test/contracts_test.rb
+git diff --check
 git status --short
 git diff --stat
 ```

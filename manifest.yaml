@@ -111,17 +111,3 @@ portable_skills:
     path: skills/commit-workflow/SKILL.md
   linus-review:
     path: skills/linus-review/SKILL.md
-
-capabilities:
-  sync-agent-workbench:
-    path: capabilities/sync-agent-workbench/capability.yaml
-  loop-until-done:
-    path: capabilities/loop-until-done/capability.yaml
-  guardrail-authoring:
-    path: capabilities/guardrail-authoring/capability.yaml
-  skill-authoring:
-    path: capabilities/skill-authoring/capability.yaml
-  commit-workflow:
-    path: capabilities/commit-workflow/capability.yaml
-  linus-review:
-    path: capabilities/linus-review/capability.yaml

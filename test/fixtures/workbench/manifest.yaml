@@ -1,0 +1,7 @@
+portable_prompts:
+  create-agent-skill:
+    path: prompts/create-agent-skill.md
+
+portable_skills:
+  sync-agent-workbench:
+    path: skills/sync-agent-workbench/SKILL.md

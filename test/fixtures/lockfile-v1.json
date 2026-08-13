@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-01T00:00:00Z",
+  "source": {
+    "repo": "KiringYJ/agent-workbench",
+    "branch": "main",
+    "requestedRef": "main",
+    "resolvedCommit": "1111111111111111111111111111111111111111"
+  },
+  "manifestDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "profile": "base",
+  "syncMode": "portable-workflows",
+  "targets": {
+    "guide": true,
+    "portable_prompts": true,
+    "portable_skills": true,
+    "claude": true
+  },
+  "scopes": {
+    "entrypoints": {
+      "resolvedCommit": "1111111111111111111111111111111111111111",
+      "manifestDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lastReconciledAt": "2026-08-01T00:00:00Z"
+    },
+    "portable_prompts": {
+      "resolvedCommit": "1111111111111111111111111111111111111111",
+      "manifestDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lastReconciledAt": "2026-08-01T00:00:00Z"
+    },
+    "portable_skills": {
+      "resolvedCommit": "1111111111111111111111111111111111111111",
+      "manifestDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lastReconciledAt": "2026-08-01T00:00:00Z"
+    },
+    "vendor_adapters": {
+      "resolvedCommit": "1111111111111111111111111111111111111111",
+      "manifestDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lastReconciledAt": "2026-08-01T00:00:00Z"
+    }
+  },
+  "installedArtifacts": [
+    {
+      "id": "entrypoint:AGENTS.md",
+      "kind": "entrypoint",
+      "scope": "entrypoints",
+      "name": "agents",
+      "sourcePath": "templates/AGENTS.md.tpl",
+      "outputPath": "AGENTS.md",
+      "sourceChecksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "lastAppliedOutputChecksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "vendor": "neutral",
+      "profile": "base",
+      "managed": true
+    },
+    {
+      "id": "portable_prompt:create-agent-skill",
+      "kind": "portable_prompt",
+      "scope": "portable_prompts",
+      "name": "create-agent-skill",
+      "sourcePath": "prompts/create-agent-skill.md",
+      "outputPath": ".agents/prompts/create-agent-skill.md",
+      "sourceChecksum": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "lastAppliedOutputChecksum": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "resourceManifest": [],
+      "capability": "skill-authoring",
+      "vendor": "neutral",
+      "profile": "base",
+      "managed": true
+    },
+    {
+      "id": "portable_skill:sync-agent-workbench",
+      "kind": "portable_skill",
+      "scope": "portable_skills",
+      "name": "sync-agent-workbench",
+      "sourcePath": "skills/sync-agent-workbench/SKILL.md",
+      "outputPath": ".agents/skills/sync-agent-workbench/SKILL.md",
+      "sourceChecksum": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "lastAppliedOutputChecksum": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "resourceManifest": [],
+      "capability": "sync-agent-workbench",
+      "vendor": "neutral",
+      "profile": "base",
+      "managed": true
+    },
+    {
+      "id": "vendor_adapter:sync-agent-workbench:claude",
+      "kind": "vendor_adapter",
+      "scope": "vendor_adapters",
+      "name": "sync-agent-workbench",
+      "sourcePath": "capabilities/sync-agent-workbench/vendors/claude.md",
+      "outputPath": ".claude/skills/sync-agent-workbench/SKILL.md",
+      "sourceChecksum": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "lastAppliedOutputChecksum": "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+      "resourceManifest": [
+        {
+          "path": "references/old.md",
+          "sourceChecksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "lastAppliedOutputChecksum": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+        }
+      ],
+      "capability": "sync-agent-workbench",
+      "vendor": "claude",
+      "profile": "base",
+      "managed": true,
+      "localEditEvidence": {
+        "checkedAt": "2026-08-01T00:00:00Z",
+        "changed": false
+      }
+    }
+  ],
+  "retainedRemovals": [
+    {
+      "id": "portable_prompt:retired-example",
+      "decision": "keep",
+      "recordedAt": "2026-08-01T00:00:00Z"
+    }
+  ]
+}

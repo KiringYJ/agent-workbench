@@ -2,7 +2,7 @@
 
 ## Architecture
 
-This repository is the source workbench for vendor-neutral AI-agent instructions. Shared guidance lives in `guide/`, profile composition lives in `profiles/`, consumer-facing templates live in `templates/`, prompt-driven workflows live in `prompts/`, portable Agent Skills live in `skills/`, and capability metadata plus vendor adapters live in `capabilities/`.
+This repository is the source workbench for composable, vendor-neutral AI-agent policy. Shared guidance lives in `guide/`, profile composition lives in `profiles/`, consumer-facing loader templates live in `templates/`, supporting workflows live in `prompts/`, and canonical portable Agent Skills live in `skills/`. Standard skills are registered directly in `manifest.yaml`; only real vendor discovery or configuration boundaries receive a shim.
 
 ## Build Commands
 
@@ -10,35 +10,39 @@ No build step is required for the prompt/template repository.
 
 ## Test Commands
 
-No automated test suite is currently required. For changes, verify by inspecting:
+Run the contract suite with Ruby and Python 3.11 or newer; it uses only their standard libraries:
 
 ```bash
+ruby -Itest test/contracts_test.rb
+git diff --check
 git status --short
 git diff --stat
 ```
 
-For prompt/template edits, also verify that `manifest.yaml` references existing files and that generated entrypoints remain thin.
+The suite verifies manifest paths, profile inheritance, generated-guide parity, thin entrypoints, portable skill frontmatter, executable v1 lockfile migration, exact managed-resource mirrors, and core sync safety contracts.
 
 ## Important Files and Directories
 
-- `manifest.yaml` — module, profile, and template registry.
+- `manifest.yaml` — direct registry for modules, profiles, templates, prompts, and skills.
 - `guide/` — source modules for generated guides.
 - `profiles/` — module selection profiles.
 - `templates/` — files created in consumer projects.
 - `prompts/` — LLM-executed sync, audit, repair, loop, guardrail, skill-authoring, and commit workflows.
 - `skills/` — portable Agent Skills copied to consumer projects under `.agents/skills/`.
-- `capabilities/` — canonical capability metadata, portability level, official-preferred notes, and thin vendor adapters.
+- `skills/sync-agent-workbench/scripts/` — dependency-free migration and managed-skill mirror verification helpers distributed with the sync skill.
+- `test/contracts_test.rb` — dependency-free structural and behavior contracts for profiles, generated artifacts, skills, and sync policy.
 
 ## Domain Terms
 
 - **Canonical guide**: `AI_AGENT_GUIDE.md`, generated from selected modules.
 - **Project guide**: `AI_AGENT_PROJECT.md`, manually maintained by each project.
 - **Thin entrypoint**: vendor-specific file that points to the canonical guides without duplicating them.
+- **Discovery mirror**: byte-identical generated copies of a standard skill's registered managed files placed in a vendor-required discovery path.
 - **Profile**: YAML selection of modules for a language or project type.
 
 ## Workspace Configuration
 
-This repository is the source workbench whose product is reusable agent guidance, templates, prompts, skills, and capability metadata. It tracks source artifacts and shared agent/editor workspace configuration in normal branch history.
+This repository is the source workbench whose product is reusable agent guidance, profiles, templates, prompts, and standard Agent Skills. It tracks source artifacts and shared agent/editor workspace configuration in normal branch history.
 
 Consumer projects should also track agent-workbench managed files on their ordinary development branches so `main` is the single source of truth. Personal settings, caches, secrets, and machine-local state remain untracked.
 

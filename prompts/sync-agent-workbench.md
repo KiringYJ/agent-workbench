@@ -26,7 +26,7 @@ Interpret the user's request and select one mode:
 - **full sync**: update managed guide, thin entrypoints, OpenCode config, Codex config, portable prompts, portable skills, create missing project/config files, and update the `.agent-workbench.lock.json` provenance ledger for the scopes actually reconciled.
 - **guide-only sync**: update only `AI_AGENT_GUIDE.md` and create `.agent-workbench.yaml` if missing.
 - **entrypoints-only sync**: update only `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `opencode.json`, and `.codex/config.toml`.
-- **portable-workflows sync**: update only managed `.agents/prompts/` and `.agents/skills/` artifacts.
+- **portable-workflows sync**: update only managed `.agents/prompts/`, `.agents/skills/`, and selected `.claude/skills/` discovery-mirror artifacts.
 - **audit-only mode**: inspect and report; do not modify files.
 - **repair missing files**: create or repair missing/malformed instruction/config files while preserving manual content.
 
@@ -56,7 +56,7 @@ If the user does not specify a mode, use **full sync**. If the user asks to inst
   - `.agents/prompts/<registered-prompt>.md`
   - `.agents/skills/<registered-skill>/SKILL.md`
   - `.agents/skills/<registered-skill>/scripts/**`, `.agents/skills/<registered-skill>/references/**`, and `.agents/skills/<registered-skill>/assets/**` when present in the workbench source
-  - `.claude/skills/<registered-skill>/SKILL.md` when the Claude target is enabled and the capability target requests a Claude generated skill surface
+  - `.claude/skills/<registered-skill>/**` when `targets.claude: true`, as an exact generated mirror of the registered portable skill directory
   - exact local `.git/info/exclude` entries that hide managed paths listed in this prompt, only to remove those stale entries when the repository uses Git
   - exact `.gitignore` entries that hide managed paths listed in this prompt, only to remove those stale entries while preserving all unrelated rules and comments
 
@@ -121,7 +121,6 @@ The `workspace-config` module identifier and orphan-branch layout are retired. T
    - selected `guide/**/*.md`
    - `templates/*.tpl`
    - registered `portable_prompts` and `portable_skills` from `manifest.yaml`
-   - registered `capabilities/*/capability.yaml` and `capabilities/*/vendors/*.md`
 
 ## Provenance ledger and removal detection
 
@@ -133,7 +132,7 @@ Minimum lockfile shape:
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generatedAt": "<iso-8601>",
   "source": {
     "repo": "KiringYJ/agent-workbench",
@@ -149,8 +148,7 @@ Minimum lockfile shape:
     "guide": { "resolvedCommit": "<sha>", "manifestDigest": "sha256:<digest>", "lastReconciledAt": "<iso-8601>" },
     "entrypoints": { "resolvedCommit": "<sha>", "manifestDigest": "sha256:<digest>", "lastReconciledAt": "<iso-8601>" },
     "portable_prompts": { "resolvedCommit": "<sha>", "manifestDigest": "sha256:<digest>", "lastReconciledAt": "<iso-8601>" },
-    "portable_skills": { "resolvedCommit": "<sha>", "manifestDigest": "sha256:<digest>", "lastReconciledAt": "<iso-8601>" },
-    "vendor_adapters": { "resolvedCommit": "<sha>", "manifestDigest": "sha256:<digest>", "lastReconciledAt": "<iso-8601>" }
+    "portable_skills": { "resolvedCommit": "<sha>", "manifestDigest": "sha256:<digest>", "lastReconciledAt": "<iso-8601>" }
   },
   "installedArtifacts": [
     {
@@ -162,10 +160,19 @@ Minimum lockfile shape:
       "outputPath": ".agents/skills/sync-agent-workbench/SKILL.md",
       "sourceChecksum": "sha256:<source>",
       "lastAppliedOutputChecksum": "sha256:<output>",
-      "resourceManifest": [],
+      "resourceManifest": [
+        {
+          "path": "scripts/migrate_lockfile.rb",
+          "sourceChecksum": "sha256:<resource-source>",
+          "lastAppliedOutputChecksum": "sha256:<resource-output>"
+        },
+        {
+          "path": "scripts/verify_skill_mirror.rb",
+          "sourceChecksum": "sha256:<resource-source>",
+          "lastAppliedOutputChecksum": "sha256:<resource-output>"
+        }
+      ],
       "markerVersion": "agent-workbench: managed portable-skill",
-      "capability": "sync-agent-workbench",
-      "vendor": "neutral",
       "profile": "base",
       "managed": true
     }
@@ -174,7 +181,21 @@ Minimum lockfile shape:
 }
 ```
 
-Artifact records should include all generated files in a skill folder (`scripts/`, `references/`, `assets/`) through `resourceManifest`. `manifestDigest` should cover the resolved manifest plus selected profile/capability metadata enough to explain why the desired artifact set changed.
+Artifact records should include all generated files in a skill folder (`scripts/`, `references/`, `assets/`) through `resourceManifest`. Record a Claude discovery mirror as another `portable_skills` artifact with the same `sourcePath` and a `.claude/skills/<name>/...` output path. `manifestDigest` should cover the resolved manifest and selected profile enough to explain why the desired artifact set changed.
+
+### Legacy capability metadata migration
+
+Schema version 1 ledgers may contain a `vendor_adapters` scope and per-artifact `capability` or `vendor` fields from the retired capability registry. Treat those fields as known legacy metadata, not as evidence that the underlying workflow was removed or that the source changed.
+
+During a full sync, portable-workflows sync, or lockfile repair:
+
+1. Match legacy records to current registered prompts and skills by normalized `sourcePath` and `outputPath`.
+2. Preserve unrelated artifact records, pre-migration timestamps, local-edit evidence, and `retainedRemovals`. Portable-workflow checksums and resource manifests are replaced only with verified current provenance in step 5.
+3. Move managed Claude skill records into the `portable_skills` scope and use the canonical skill path as their source.
+4. Reconcile the registered prompt and skill files first. Then, when available, run `skills/sync-agent-workbench/scripts/migrate_lockfile.rb` with the resolved workbench manifest, consumer root, expected source repo/branch/requested ref, real manifest digest, resolved commit, and reconciliation timestamp. The expected source identity must match the v1 ledger; otherwise stop with source changed / migration required. Write to a new sibling temporary path, never over the live ledger.
+5. The migration must verify current source/output bytes, reject destinations outside the exact registered portable-workflow paths, recompute workflow checksums and resource manifests, and preserve unrelated artifact records and retained evidence. A stale generated adapter is not valid v2 provenance.
+6. Drop the obsolete `vendor_adapters` scope and `capability`/`vendor` fields only after the affected portable workflow scope reconciles successfully.
+7. Inspect and parse the candidate, finish any other active-scope updates, and only then atomically replace the live ledger with schema version 2. Do not delete an unmatched or duplicate legacy artifact; classify it with the normal removal rules and request any required decision.
 
 ### Active scopes and baseline advancement
 
@@ -183,7 +204,7 @@ Advance only the scopes actually reconciled by the selected mode:
 - full sync: all selected scopes.
 - guide-only sync: `guide` only.
 - entrypoints-only sync: `entrypoints` and vendor config only.
-- portable-workflows sync: `portable_prompts`, `portable_skills`, and generated vendor adapters only.
+- portable-workflows sync: `portable_prompts` and `portable_skills`, including the Claude discovery mirror when selected.
 - repair missing files: only repaired scopes and artifacts.
 
 Do not classify or delete artifacts from inactive scopes. Do not advance inactive scope baselines.
@@ -215,10 +236,10 @@ Classify every candidate with one of these exact statuses:
 2. **confirmed removal with local edits** — same as confirmed upstream removal, but local checksum or resource manifest differs from the lockfile. Default to keep/backup; do not include it in a broad safe delete-all choice unless explicitly selected.
 3. **suspected legacy removal** — no usable lockfile exists, but an objective managed ownership signal exists and the artifact is absent from the current upstream manifest. Say this is inferred, not confirmed by Git history.
 4. **deselected by local config** — the artifact exists or is lockfile-recorded, but the current profile/targets/sync mode no longer selects it. Do not call this an upstream removal.
-5. **source changed / migration required** — source repo, branch, manifest digest, artifact id, source path, or capability identity changed enough that comparison is unsafe. Stop removal classification for affected artifacts and ask for a migration/audit decision.
+5. **source changed / migration required** — source repo, branch, manifest digest, artifact id, or source path changed enough that comparison is unsafe. Stop removal classification for affected artifacts and ask for a migration/audit decision. Do not use the retired capability metadata alone as this evidence; apply the schema version 1 migration above first.
 6. **local unmanaged** — no lockfile record and no objective managed ownership signal. Preserve by default and do not present as an upstream-removal candidate.
 
-If upstream manifest or capability metadata provides tombstone, rename, `renamed_from`, `supersedes`, or removed-artifact metadata, use it to produce migration prompts instead of treating the change as a simple delete plus new install.
+If the upstream manifest provides tombstone, rename, `renamed_from`, `supersedes`, or removed-artifact metadata, use it to produce migration prompts instead of treating the change as a simple delete plus new install.
 
 ### User confirmation for deletion
 
@@ -341,7 +362,7 @@ For full sync and portable-workflows sync, copy the registered workflow artifact
 
 - `portable_prompts.<name>.path` -> `.agents/prompts/<name>.md`
 - `portable_skills.<name>.path` -> `.agents/skills/<name>/SKILL.md`
-- `capabilities.<name>.path` records the canonical skill, canonical prompts, vendor adapters, official-preferred behavior, and optional generated vendor outputs.
+- when `targets.claude: true`, `portable_skills.<name>.path` -> `.claude/skills/<name>/SKILL.md` with the rest of the registered skill directory mirrored alongside it
 
 Rules:
 
@@ -352,9 +373,10 @@ Rules:
 - Do not overwrite files under `.agents/skills/<name>/` that are not part of the registered managed source skill.
 - Prefer real copied directories over symlinks for portability.
 - Do not create vendor-specific mirrors such as `.codex/skills/`, `.gemini/skills/`, or `.opencode/skills/` unless the user explicitly requests them.
-- When `targets.claude: true`, generate `.claude/skills/<name>/SKILL.md` for capabilities whose Claude target mode starts with `generated-skill` or is `official-preferred` with fallback enabled. Build it from the canonical neutral `SKILL.md` plus the small `capabilities/<name>/vendors/claude.md` adapter note. Do not install Claude plugins or marketplace entries.
+- When `targets.claude: true`, copy every registered managed file in each portable skill directory to `.claude/skills/<name>/` so Claude Code can discover it. For the registered managed source/resource set, the Claude files must be byte-identical to the corresponding `.agents/skills/<name>/` files: do not append adapter prose, change frontmatter, or omit registered resources. Preserve unregistered local files under `.agents/skills/<name>/`, but do not copy them into the generated Claude mirror. Do not install Claude plugins or marketplace entries.
+- After copying, run `skills/sync-agent-workbench/scripts/verify_skill_mirror.rb <workbench-root> <consumer-root> --claude` when the helper is available and the Claude target is enabled. Without Claude, omit `--claude`. Treat any missing or differing registered file, or any unregistered file inside a registered Claude mirror directory, as a failed sync.
 - For Codex, Gemini, and OpenCode, prefer `.agents/skills/<name>/SKILL.md` as the shared generated surface unless the user explicitly requests a vendor-native mirror.
-- If a capability is marked `official-preferred` for the active vendor, mention the native implementation as the preferred invocation when available, but still keep the neutral fallback skill available.
+- If the active vendor exposes a compatible built-in or installed implementation, it may be the preferred invocation when available, but still keep the neutral fallback skill available. Record this policy in the canonical skill or prompt instead of a per-vendor adapter file.
 - Treat `agent-workbench: managed portable-prompt` and `agent-workbench: managed portable-skill` as overwrite markers.
 - If a consumer project already has a local `.agents/prompts/<name>.md` or `.agents/skills/<name>/SKILL.md` with unmarked manual edits, replace it only when the file carries an agent-workbench managed marker or when the user requested repair/full overwrite. Otherwise report the conflict.
 - Before copying portable workflows, compare the current desired set with `.agent-workbench.lock.json` for the active scopes. Present confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, and local unmanaged findings using the classification rules above.

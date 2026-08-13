@@ -13,3 +13,5 @@ OpenCode can explicitly load instruction files with `opencode.json`:
 ```
 
 If a project already has `opencode.json`, merge the two instruction paths into the existing configuration and preserve unrelated settings.
+
+OpenCode discovers project Agent Skills under `.agents/skills/`. Do not create a separate `.opencode/skills/` mirror solely for discovery.
