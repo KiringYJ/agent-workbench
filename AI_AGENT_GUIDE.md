@@ -303,6 +303,13 @@ The old branch is no longer authoritative once the normal branch contains and ve
 - If sensitive material appears in the working tree, stop and report it without copying the secret into logs or summaries.
 - Do not print secret values. Redact them when context is necessary.
 
+## Local Path Privacy
+
+- Treat every repository and GitHub surface as potentially public, even when its current visibility is private.
+- Never commit or publish a real machine-local absolute path. This includes tracked files, generated artifacts, logs, commit messages, pull requests, issues, review comments, release notes, and attachments.
+- Before committing or publishing, inspect changed content and outbound metadata for Windows drive, UNC, user-profile, and POSIX home paths. Replace them with repository-relative paths or neutral placeholders such as `<repo>`, `<workspace>`, or `<home>`.
+- Keep absolute paths confined to local execution or private diagnostics when they are necessary; do not copy them into repository history or GitHub-visible content.
+
 ## Action and Scope Boundaries
 
 - For requests to answer, explain, review, diagnose, or plan, inspect the relevant material and report the result. Do not implement changes unless the request also asks for them.
