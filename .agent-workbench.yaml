@@ -8,7 +8,7 @@ modules:
   - base
   - prompting
   - git
-  - workspace-config
+  - repository-workspace
   - security
   - testing
   - review

@@ -194,29 +194,21 @@ Before reporting completion:
 
 ---
 
-# Workspace Configuration Orphan Branch
+# Repository-Tracked Workspace Configuration
 
-Use a dedicated orphan Git branch named `workspace-config` for reproducible local workspace overlays such as agent instructions, editor settings, prompts, and local automation. This keeps product branches clean while still versioning the files an agent or developer needs to recreate the same workspace.
+Track reusable agent instructions, editor settings, prompts, and local automation in the repository's normal branch history. This is the required layout for agent-workbench managed artifacts: contributors should receive them with a normal clone, and `main` should contain the authoritative version.
 
-Recommended repository shape:
-
-```text
-same project repo
-├─ main                # clean product branch
-├─ dev                 # clean integration branch
-├─ feature/*           # normal product work
-└─ workspace-config    # orphan workspace overlay branch, never merged
-```
+Feature branches may update workspace configuration like any other project file. Review and merge those changes through the repository's normal workflow; do not maintain a separate configuration branch or worktree.
 
 ## Core Invariant
 
-`workspace-config` must never be merged, rebased, or cherry-picked wholesale into `main`, `dev`, or product feature branches.
+`main` is the source of truth for shared workspace configuration.
 
-Product branches must not track workspace-only files. Workspace files may physically exist in a normal product worktree, but they must stay ignored locally through `.git/info/exclude`, not through project `.gitignore`, unless the project explicitly decides those paths are project-wide policy.
+Project-wide workspace files must not be hidden through `.git/info/exclude` or broad project `.gitignore` rules. Keep only genuinely personal, machine-local, generated, cached, or secret-bearing files untracked.
 
-## What Belongs in `workspace-config`
+## What Belongs in the Repository
 
-The branch is for reproducible local development setup, not product source code. Core agent-workbench overlay files include the human config and the agent-owned provenance ledger:
+Core agent-workbench files are shared project policy and should be tracked:
 
 ```text
 AI_AGENT_GUIDE.md
@@ -232,7 +224,7 @@ GEMINI.md
 opencode.json
 ```
 
-Additional local workspace paths may also belong on `workspace-config` when they are not project-owned:
+Additional workspace paths may also be tracked when they are useful to every contributor:
 
 ```text
 .agent/
@@ -242,167 +234,64 @@ prompts/
 scripts/
 ```
 
-Exceptions are allowed only when a file is intentionally part of the project for all contributors. For example, a repository may choose to track `.vscode/extensions.json`, `prompts/`, or `scripts/` on `main`; if so, document that exception in `AI_AGENT_PROJECT.md`.
-
-## What Belongs on Product Branches
-
-`main`, `dev`, and `feature/*` should contain product source code, product documentation, tests, and configuration required by the actual application or library.
-
-They should not track local workspace overlays such as agent prompts, editor workspaces, local automation, or vendor-specific AI-agent files unless the project explicitly promotes that file into project policy.
+Classify optional paths before adding them. Shared extensions, tasks, prompts, and deterministic automation belong in the repository; personal UI preferences, caches, credentials, absolute machine paths, and local runtime state do not.
 
 ## Initial Setup
 
-Create the orphan branch from the repository root:
+Create or synchronize the workspace files on the current normal development branch. Inspect the result before staging:
 
 ```bash
 git status --short
-git switch --orphan workspace-config
-git rm -rf .
+git diff -- AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
 ```
 
-Start only from a clean product worktree. If `git status --short` shows changes, preserve or commit them before switching branches.
-
-Create or restore the workspace files, then commit them:
+When the user requests a commit, stage only the reviewed project-wide paths:
 
 ```bash
 git add AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
-git commit -m "chore: add workspace config overlay"
-git push -u origin workspace-config
+git commit -m "chore: synchronize workspace configuration"
 ```
 
-Add optional workspace-only paths such as `.cursor/`, `.vscode/`, `prompts/`, or `scripts/` only after confirming they are not product-owned.
+Do not stage optional editor or automation directories until they have been classified as project-wide and reviewed for secrets or machine-local state.
 
-Return to product development:
+## Updating Workspace Configuration
+
+Update managed files in the current working tree and review them alongside the project changes that require them. A normal clone, branch switch, merge, or rebase carries the configuration without a restore step or auxiliary worktree.
+
+Before committing:
+
+1. Inspect `git status --short` and the relevant diff.
+2. Confirm managed files are not hidden by `.git/info/exclude` or `.gitignore`.
+3. Preserve `AI_AGENT_PROJECT.md`, explicit manual blocks, and unregistered local workflows according to the sync contract.
+4. Stage only the intended files.
+5. Run the repository's documented validation.
+
+## Forced Migration from the Retired Layout
+
+The former `workspace-config` module identifier and orphan branch layout are not supported. Replace the module identifier with `repository-workspace`, then migrate any files held on a legacy branch by comparing and copying them into a clean normal branch. Do not merge unrelated branch histories wholesale.
 
 ```bash
-git switch main
+git status --short
+git fetch origin
+git branch --all --list "*workspace-config*"
+legacy_ref=origin/workspace-config
+git ls-tree -r --name-only "$legacy_ref"
+git restore --source="$legacy_ref" -- AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
 ```
 
-If the branch was previously named `agent-config`, rename it:
+Update `.agent-workbench.yaml` so it selects `repository-workspace` and contains no `workspace-config` alias. Remove only the exact legacy entries that hide managed paths from `.git/info/exclude` or `.gitignore`, then inspect and stage the migrated files on the normal branch. Preserve any newer project-owned version after resolving differences file by file.
 
-```bash
-git switch agent-config
-git branch -m workspace-config
-git push origin :agent-config
-git push -u origin workspace-config
-```
-
-## Local Excludes on Product Branches
-
-In the normal product worktree, add workspace-overlay paths to `.git/info/exclude`. Use local excludes instead of `.gitignore` because this is local workspace policy, not necessarily product policy.
-
-Bash:
-
-```bash
-cat >> .git/info/exclude <<'EOF'
-AI_AGENT_GUIDE.md
-AI_AGENT_PROJECT.md
-AGENTS.md
-CLAUDE.md
-GEMINI.md
-.agent-workbench.yaml
-.agent-workbench.lock.json
-.agents/
-.codex/
-.claude/
-opencode.json
-EOF
-```
-
-Append optional paths such as `.agent/`, `.cursor/`, `.vscode/`, `prompts/`, or `scripts/` only when the project treats them as workspace-only.
-
-PowerShell:
-
-```powershell
-@"
-AI_AGENT_GUIDE.md
-AI_AGENT_PROJECT.md
-AGENTS.md
-CLAUDE.md
-GEMINI.md
-.agent-workbench.yaml
-.agent-workbench.lock.json
-.agents/
-.codex/
-.claude/
-opencode.json
-"@ | Add-Content .git/info/exclude
-```
-
-Append optional paths such as `.agent/`, `.cursor/`, `.vscode/`, `prompts/`, or `scripts/` only when the project treats them as workspace-only.
-
-## Restore Workspace Files into a Product Worktree
-
-On a new machine or fresh clone:
-
-```bash
-git clone <project-url> my-project
-cd my-project
-git restore --source=origin/workspace-config -- AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
-```
-
-Then add the local excludes shown above. After this, the workspace files physically exist in the product worktree but are not tracked by product branches.
-
-## Updating Workspace Config
-
-Prefer a temporary worktree for updates so the orphan branch remains isolated:
-
-```bash
-git worktree add ../my-project-workspace-config workspace-config
-```
-
-Copy the updated workspace files from the product worktree into that temporary worktree:
-
-```bash
-cp -r AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json ../my-project-workspace-config/
-```
-
-PowerShell alternative:
-
-```powershell
-Copy-Item -Recurse -Force AI_AGENT_GUIDE.md, AI_AGENT_PROJECT.md, AGENTS.md, CLAUDE.md, GEMINI.md, .agent-workbench.yaml, .agent-workbench.lock.json, .agents, .codex, .claude, opencode.json ..\my-project-workspace-config\
-```
-
-Commit from the temporary worktree:
-
-```bash
-cd ../my-project-workspace-config
-git add -A
-git commit -m "chore: update workspace config overlay"
-git push
-```
-
-Refresh local workspace files in the product worktree:
-
-```bash
-git restore --source=origin/workspace-config -- AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
-```
-
-## If Workspace Files Are Already Tracked on a Product Branch
-
-Remove them from the product branch index while preserving the physical files:
-
-```bash
-git rm -r --cached AI_AGENT_GUIDE.md AI_AGENT_PROJECT.md AGENTS.md CLAUDE.md GEMINI.md .agent-workbench.yaml .agent-workbench.lock.json .agents .codex .claude opencode.json
-git commit -m "chore: stop tracking local workspace config"
-```
-
-Then ensure `.git/info/exclude` contains those paths and commit the files on `workspace-config`. The `.agent-workbench.lock.json` file belongs with this overlay because it records the last sync baseline used to detect confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, local unmanaged artifacts, and retainedRemovals context.
+The old branch is no longer authoritative once the normal branch contains and verifies every intended file. Deleting local or remote legacy branches is a separate destructive cleanup and requires explicit authorization.
 
 ## Agent Rules
 
-When working in a repository that uses this design:
-
-1. Treat `main`, `dev`, and `feature/*` as product-code branches.
-2. Treat `workspace-config` as an orphan branch for local development overlay files.
-3. Never merge `workspace-config` into a product branch.
-4. Never add workspace-only files to product branches.
-5. Restore workspace files from `workspace-config` when they are needed in a normal worktree.
-6. Commit workspace-file updates on `workspace-config`, preferably through a temporary worktree.
-7. Use `.git/info/exclude` to keep restored workspace files untracked on product branches.
-8. Before committing on a product branch, run `git status --short` and confirm workspace files are not staged.
-
-Git has no native rule that means "track these files on `dev`, but automatically omit them when merging into `main`." Therefore `dev` must remain clean, and `workspace-config` is the versioned storage location for local workspace configuration.
+1. Treat shared workspace configuration as project-owned content in normal branch history.
+2. Keep `main` authoritative; do not create or refresh a separate workspace configuration branch.
+3. Do not hide managed project-wide paths in `.git/info/exclude` or `.gitignore`.
+4. Preserve genuinely local files and never commit secrets, credentials, caches, or machine-specific state.
+5. Show workspace changes in normal Git status and diff output.
+6. Stage, commit, push, or delete a legacy branch only when the user requests the corresponding Git action.
+7. When migrating legacy branch content, compare and copy intended paths rather than merging unrelated histories wholesale.
 
 ---
 
@@ -444,7 +333,7 @@ The sync process may update only:
 - Registered portable skills under `.agents/skills/`
 - Generated Claude project skills under `.claude/skills/` when the Claude target is enabled
 
-Any broader edit requires explicit user authorization. Sync may classify generated artifacts as confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, or local unmanaged, but it must not delete downstream artifacts without explicit user confirmation. Deletion candidates must be normalized, allowlisted workspace-overlay paths; local/unmanaged artifacts are preserved by default, and kept removals should be recorded in `retainedRemovals`.
+Any broader edit requires explicit user authorization. Sync may classify generated artifacts as confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, or local unmanaged, but it must not delete downstream artifacts without explicit user confirmation. Deletion candidates must be normalized, allowlisted managed output paths; local/unmanaged artifacts are preserved by default, and kept removals should be recorded in `retainedRemovals`.
 
 ---
 

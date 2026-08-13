@@ -19,11 +19,13 @@ description: Synchronize, audit, or repair vendor-neutral agent-workbench files 
 5. Keep vendor entrypoints thin and canonical content under `AI_AGENT_GUIDE.md`, `.agents/prompts/`, and `.agents/skills/`.
 6. Treat install as first sync: `.agent-workbench.yaml` is human-owned desired config and `.agent-workbench.lock.json` is the agent-owned provenance/baseline ledger.
 7. Use lockfile + current desired set to classify removal drift as confirmed upstream removal, confirmed removal with local edits, suspected legacy removal, deselected by local config, source changed / migration required, or local unmanaged. Never delete without explicit user confirmation; record kept removals in `retainedRemovals`.
-8. Verify with `git status --short`, `git diff --stat`, and manifest path checks when working in the workbench repository.
+8. Track managed workspace files in normal repository history. Migrate the retired `workspace-config` module identifier to `repository-workspace`; do not provide a compatibility alias or create a separate configuration branch.
+9. Verify with `git status --short`, `git diff --stat`, and manifest path checks when working in the workbench repository.
 
 ## Guardrails
 
 - Do not install marketplace plugins, extensions, global/user-scope settings, or git submodules.
 - Do not modify application source code during sync unless the user separately requested application changes.
 - Do not create `AGENT.md`; use `AGENTS.md`.
-- Do not delete downstream artifacts silently; deletion candidates must be normalized, allowlisted workspace-overlay paths and user-confirmed.
+- Do not hide managed project-wide files through `.git/info/exclude` or broad `.gitignore` rules.
+- Do not delete downstream artifacts silently; deletion candidates must be normalized, allowlisted managed output paths and user-confirmed.

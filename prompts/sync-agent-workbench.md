@@ -17,7 +17,7 @@ A sync is complete when:
 - relevant parse, path-safety, idempotence, and Git diff checks pass; and
 - the final report identifies changed, preserved, skipped, and blocked items.
 
-Reading files, generating or updating allowed local artifacts, maintaining local excludes, and running non-destructive validation are authorized by a sync request. Ask only when deletion, destructive Git work, source migration, malformed-state recovery, unrequested remote publication, or a material expansion of scope requires a user decision. Stop after the completion criteria are met.
+Reading files, generating or updating allowed local artifacts, removing exact stale ignore entries that hide managed files, and running non-destructive validation are authorized by a sync request. Ask only when deletion, destructive Git work, source migration, malformed-state recovery, unrequested staging/commit/publication, or a material expansion of scope requires a user decision. Stop after the completion criteria are met.
 
 ## Supported natural-language modes
 
@@ -40,8 +40,9 @@ If the user does not specify a mode, use **full sync**. If the user asks to inst
 - Do not create git submodules.
 - Do not rely on machine-local absolute paths.
 - Do not create `AGENT.md`; the correct file is `AGENTS.md`.
-- Do not merge, rebase, or cherry-pick `workspace-config` wholesale into `main`, `dev`, or product feature branches.
-- Do not stage or commit workspace-only agent/editor configuration on product branches unless the project explicitly documents that path as project-wide policy.
+- Do not create or refresh a separate workspace configuration branch; managed project-wide files belong in normal repository history.
+- Do not hide managed project-wide files through `.git/info/exclude` or broad `.gitignore` rules.
+- Do not stage, commit, push, or delete a legacy branch unless the user requested the corresponding Git action.
 - Only update these files unless the user explicitly authorizes more:
   - `AI_AGENT_GUIDE.md`
   - `AI_AGENT_PROJECT.md` only when missing
@@ -56,28 +57,29 @@ If the user does not specify a mode, use **full sync**. If the user asks to inst
   - `.agents/skills/<registered-skill>/SKILL.md`
   - `.agents/skills/<registered-skill>/scripts/**`, `.agents/skills/<registered-skill>/references/**`, and `.agents/skills/<registered-skill>/assets/**` when present in the workbench source
   - `.claude/skills/<registered-skill>/SKILL.md` when the Claude target is enabled and the capability target requests a Claude generated skill surface
-  - local `.git/info/exclude` entries for the workspace-overlay paths listed in this prompt, when the repository uses Git
+  - exact local `.git/info/exclude` entries that hide managed paths listed in this prompt, only to remove those stale entries when the repository uses Git
+  - exact `.gitignore` entries that hide managed paths listed in this prompt, only to remove those stale entries while preserving all unrelated rules and comments
 
-## Workspace-config orphan branch policy
+## Repository-tracked workspace policy
 
-Agent-workbench managed files are workspace overlay by default. In Git repositories, store them on a dedicated orphan branch named `workspace-config` and keep product branches clean unless `AI_AGENT_PROJECT.md` explicitly documents a project-wide exception.
+Agent-workbench managed files are project-wide workspace configuration by default. In Git repositories, track them in ordinary branch history so contributors receive them with a normal clone and `main` remains the single source of truth.
 
 Required invariant:
 
 ```text
-workspace-config must never be merged, rebased, or cherry-picked wholesale into main, dev, or product feature branches.
+shared agent and editor configuration is visible to normal Git status and versioned with the project.
 ```
 
 Before writing files in a consumer Git repository:
 
 1. Detect the current branch and existing tracked files with `git status --short`, `git branch --show-current`, and `git ls-files -- <workspace-paths>`.
-2. Treat `main`, `dev`, and `feature/*` as product branches unless the project documents different branch names.
-3. Ensure product worktrees locally exclude workspace-overlay paths through `.git/info/exclude`, not project `.gitignore`.
-4. If workspace-overlay files are already tracked on a product branch, do not silently remove them from the index. Report the migration command (`git rm --cached ...`) unless the user explicitly requested migration/repair.
-5. Generate or refresh the workspace files in the working tree, but do not stage them to a product branch.
-6. To version workspace changes, create or update `workspace-config` through a temporary worktree. Push only when the user explicitly requested remote publication or already asked for publish/push.
+2. Treat the core managed paths below as project-wide files in the current normal development branch. Only optional editor or automation paths may be classified as personal or machine-local in `AI_AGENT_PROJECT.md`.
+3. Inspect `.git/info/exclude` and `.gitignore`. Remove only exact stale entries that hide managed project-wide paths; preserve unrelated ignore rules and genuinely local files.
+4. If files exist only on a legacy `workspace-config` branch, compare and copy the intended paths into the current clean normal branch. Do not merge unrelated branch histories wholesale, overwrite newer project-owned content, or delete the legacy branch without explicit authorization.
+5. Generate or refresh the workspace files in the working tree and leave them visible in normal Git status. Do not stage or commit them unless the user requested that Git action.
+6. Do not create or update a separate workspace configuration branch. Push only when the user explicitly requested remote publication or already asked for publish/push.
 
-Default agent-workbench workspace-overlay paths:
+Default agent-workbench managed project paths:
 
 ```text
 AI_AGENT_GUIDE.md
@@ -93,7 +95,18 @@ GEMINI.md
 opencode.json
 ```
 
-Optional local workspace paths such as `.agent/`, `.cursor/`, `.vscode/`, `prompts/`, or `scripts/` may also use the branch, but only after confirming they are not product-owned. If a path is intentionally shared with all contributors, document that exception in `AI_AGENT_PROJECT.md` and treat it as project policy rather than workspace overlay.
+Optional workspace paths such as `.agent/`, `.cursor/`, `.vscode/`, `prompts/`, or `scripts/` may also be tracked when they are useful to every contributor. Classify them before writing: shared deterministic configuration belongs in the repository, while personal settings, secrets, caches, absolute machine paths, and local runtime state stay untracked.
+
+### Forced migration from the retired branch layout
+
+The `workspace-config` module identifier and orphan-branch layout are retired. There is no compatibility alias.
+
+- In full sync, guide-only sync, or repair mode, replace a selected `workspace-config` module with `repository-workspace` in `.agent-workbench.yaml` before resolving modules. Do not keep both identifiers.
+- In audit-only mode, report the legacy module identifier as a failure that requires migration.
+- If managed files exist only on a legacy `workspace-config` branch, copy the intended versions into the current clean normal branch, preserve newer project-owned content, and expose the results to normal Git status.
+- Remove only exact legacy `.git/info/exclude` or `.gitignore` entries that hide managed project-wide paths. Preserve unrelated ignore rules and comments.
+- Update the provenance ledger for successfully reconciled scopes using the new manifest/module identity. Do not preserve an alias or keep the old branch as an active source.
+- Do not delete local or remote legacy branches automatically. Report them as cleanup remaining after `main` contains and verifies all intended files; branch deletion requires an explicit request.
 
 ## Inputs to read
 
@@ -101,7 +114,7 @@ Optional local workspace paths such as `.agent/`, `.cursor/`, `.vscode/`, `promp
 2. Read `.agent-workbench.yaml` if present. Treat it as human-owned desired configuration only.
 3. Read `.agent-workbench.lock.json` if present. Treat it as an agent-owned provenance/baseline ledger, not as user configuration or a package-manager lock.
 4. Read existing managed files if present, especially `AI_AGENT_GUIDE.md`, to preserve manual blocks.
-5. If the repository uses Git, inspect the current branch, whether `workspace-config` exists, local `.git/info/exclude`, and whether workspace-overlay paths are tracked on the current branch.
+5. If the repository uses Git, inspect the current branch, local `.git/info/exclude`, `.gitignore`, whether managed paths are tracked on the current branch, and whether a legacy `workspace-config` branch contains content that still needs migration.
 6. Read the workbench source files from the current checkout or from `KiringYJ/agent-workbench` if the user references the repository remotely:
    - `manifest.yaml`
    - selected `profiles/*.yaml`
@@ -114,7 +127,7 @@ Optional local workspace paths such as `.agent/`, `.cursor/`, `.vscode/`, `promp
 
 `.agent-workbench.yaml` is the human-owned desired configuration. Do not store generated sync state there.
 
-`.agent-workbench.lock.json` is an agent-owned provenance/baseline ledger. It records what the last successful sync actually installed for each scope so later syncs can detect removed, deselected, locally edited, or migrated artifacts. It is a workspace-overlay file and should be versioned/restored with `workspace-config` when the project uses that branch model.
+`.agent-workbench.lock.json` is an agent-owned provenance/baseline ledger. It records what the last successful sync actually installed for each scope so later syncs can detect removed, deselected, locally edited, or migrated artifacts. It is shared project configuration and should be tracked in normal repository history with the managed files it describes.
 
 Minimum lockfile shape:
 
@@ -177,7 +190,7 @@ Do not classify or delete artifacts from inactive scopes. Do not advance inactiv
 
 ### Generated artifact deletion scope
 
-Deletion candidates must normalize to repository-relative paths and stay inside the allowed workspace-overlay outputs:
+Deletion candidates must normalize to repository-relative paths and stay inside the allowed managed outputs:
 
 - `AI_AGENT_GUIDE.md`
 - `CLAUDE.md`
@@ -229,15 +242,16 @@ Rewrite `.agent-workbench.lock.json` only after all selected writes/deletes comp
 ## Profile and module resolution
 
 1. If `.agent-workbench.yaml` is missing, create it from `templates/agent-workbench.yaml.tpl` with `profile: base`, unless the user requested another profile.
-2. Load `manifest.yaml`.
-3. Resolve the selected profile from `profiles/<profile>.yaml`.
-4. If a profile has `extends`, load the parent profile first.
-5. Concatenate modules in this order:
+2. If `.agent-workbench.yaml` selects the retired `workspace-config` module, replace it with `repository-workspace` as the required breaking migration. Do not accept or synthesize an alias.
+3. Load `manifest.yaml`.
+4. Resolve the selected profile from `profiles/<profile>.yaml`.
+5. If a profile has `extends`, load the parent profile first.
+6. Concatenate modules in this order:
    - parent profile modules
    - child profile modules
    - explicit `modules:` listed in `.agent-workbench.yaml` that are not already included
-6. Validate each module name exists in `manifest.yaml`.
-7. If a requested module is missing, report it and continue only if enough modules remain to produce a useful guide.
+7. Validate each module name exists in `manifest.yaml`.
+8. If a requested module is missing, report it and continue only if enough modules remain to produce a useful guide. The retired `workspace-config` identifier is handled only by the forced migration above, never as a compatibility module.
 
 ## AI_AGENT_GUIDE.md generation
 
@@ -358,5 +372,5 @@ End with a concise diff-style summary:
 - Manual blocks preserved.
 - Portable prompts and skills synced or skipped.
 - Any parse errors, skipped modules, malformed lockfile issues, retained removals, or assumptions.
-- Workspace-config branch status, product-branch tracking exceptions, whether `.git/info/exclude` was updated, and whether `.agent-workbench.lock.json` was created or updated.
+- Git tracking status for managed paths, exact stale ignore entries removed, any legacy-branch migration findings, and whether `.agent-workbench.lock.json` was created or updated.
 - Confirmation that no application source code, dependencies, global config, marketplace, plugin installation, or submodule was modified.

@@ -16,7 +16,7 @@ A sync creates a small set of agent instruction files in your project:
 - Optional project-scoped agent config and portable workflows under `.agents/`.
 - `.agent-workbench.lock.json` — an agent-owned provenance ledger that records the last successful sync baseline.
 
-By default, those files are a reproducible workspace overlay: store them on an orphan `workspace-config` branch, restore them into local worktrees when needed, and keep them ignored locally with `.git/info/exclude` so `main`, `dev`, and feature branches stay product-only.
+By default, those files are repository-tracked project configuration. Keep them in normal branch history so a clone receives the complete workspace and `main` remains the single source of truth for both product code and shared agent/editor setup.
 
 It does **not** require marketplace installs, global configuration, git submodules, plugins, or machine-local paths.
 
@@ -32,7 +32,7 @@ https://raw.githubusercontent.com/KiringYJ/agent-workbench/main/prompts/sync-age
 
 Run a full sync. Inspect the project and choose the most appropriate available profile.
 If .agent-workbench.yaml already specifies a profile, keep using it.
-Use the `workspace-config` orphan branch design for agent/editor workspace files.
+Track agent/editor workspace files in normal branch history so they are included on `main`.
 Do not modify application source code.
 Do not install dependencies, plugins, marketplaces, global config, or submodules.
 ```
@@ -96,7 +96,7 @@ Do not modify application source code.
 
 Sync is intentionally narrow. It may update agent instruction files, project-scoped agent configuration, `.agent-workbench.lock.json`, and registered portable workflows. It must not change application source code, dependencies, global/user configuration, marketplace/plugin installation state, or git submodules.
 
-In Git repositories, sync should also maintain local `.git/info/exclude` entries for workspace-overlay paths and should version those paths, including `.agent-workbench.lock.json`, on `workspace-config`, never by merging that branch into product branches.
+In Git repositories, sync should keep managed workspace paths visible to normal Git status and version them, including `.agent-workbench.lock.json`, in the repository's ordinary branch history. It should remove exact stale ignore entries left by the retired orphan-branch workflow, especially entries in `.git/info/exclude`, but it must not stage, commit, or push unless the user requested that Git action.
 
 `AI_AGENT_PROJECT.md` is created if missing, but after that it belongs to your project and should be edited by hand. Sync may report **confirmed upstream removal**, **confirmed removal with local edits**, **suspected legacy removal**, **deselected by local config**, **source changed / migration required**, or **local unmanaged** findings. It must ask before deleting downstream artifacts and should record kept obsolete artifacts in `retainedRemovals`.
 

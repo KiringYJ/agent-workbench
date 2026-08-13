@@ -12,6 +12,6 @@
 
 ## Workspace Configuration
 
-Document any project-wide exceptions to the default `workspace-config` orphan branch design here. If no exceptions are listed, agent/editor workspace files should stay on `workspace-config` and be ignored locally on product branches.
+Document which optional editor, prompt, or automation paths are shared project configuration and which must remain personal or machine-local. Core agent-workbench managed files should be tracked in normal branch history so `main` remains authoritative.
 
 ## Project-Specific Constraints

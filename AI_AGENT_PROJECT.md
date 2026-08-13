@@ -38,9 +38,9 @@ For prompt/template edits, also verify that `manifest.yaml` references existing 
 
 ## Workspace Configuration
 
-This repository is the source workbench whose product is reusable agent guidance, templates, prompts, skills, and capability metadata. It intentionally tracks those source artifacts on `main`.
+This repository is the source workbench whose product is reusable agent guidance, templates, prompts, skills, and capability metadata. It tracks source artifacts and shared agent/editor workspace configuration in normal branch history.
 
-Consumer projects should use the `workspace-config` orphan branch design for local agent/editor workspace overlays unless they document a project-wide exception.
+Consumer projects should also track agent-workbench managed files on their ordinary development branches so `main` is the single source of truth. Personal settings, caches, secrets, and machine-local state remain untracked.
 
 ## Commit Message Requirements
 

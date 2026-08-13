@@ -7,8 +7,8 @@ modules:
     path: guide/prompting.md
   git:
     path: guide/git.md
-  workspace-config:
-    path: guide/workspace-config.md
+  repository-workspace:
+    path: guide/repository-workspace.md
   security:
     path: guide/security.md
   testing:
