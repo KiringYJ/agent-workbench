@@ -111,3 +111,5 @@ portable_skills:
     path: skills/commit-workflow/SKILL.md
   linus-review:
     path: skills/linus-review/SKILL.md
+  read-chatgpt-conversation:
+    path: skills/read-chatgpt-conversation/SKILL.md

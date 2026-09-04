@@ -491,6 +491,7 @@ Do not generate `.codex/skills/`, `.gemini/skills/`, or `.opencode/skills/` mirr
 | Skill authoring | `.agents/prompts/create-agent-skill.md`, `.agents/skills/skill-authoring/SKILL.md` |
 | Commit workflow | `.agents/prompts/commit-workflow.md`, `.agents/skills/commit-workflow/SKILL.md` |
 | Linus-style review | `.agents/prompts/linus-review.md`, `.agents/skills/linus-review/SKILL.md` |
+| Read a linked ChatGPT conversation | `.agents/skills/read-chatgpt-conversation/SKILL.md` |
 
 ## Portability Rules
 

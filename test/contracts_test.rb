@@ -132,6 +132,7 @@ class WorkbenchContractsTest < Minitest::Test
       guardrail-authoring
       linus-review
       loop-until-done
+      read-chatgpt-conversation
       skill-authoring
       sync-agent-workbench
     ], MANIFEST.fetch("portable_skills").keys.sort
