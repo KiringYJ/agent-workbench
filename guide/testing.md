@@ -12,6 +12,8 @@ For feature work and bug fixes, prefer this loop:
 
 If the project lacks tests, use the lightest reliable verification available and state the gap.
 
+For reversible, low-impact changes, avoid adding tests that merely repeat implementation details or match documentation wording. Add tests when they establish meaningful behavior or protect a real boundary.
+
 ## Root Cause and Proof Discipline
 
 - For bug fixes, first reproduce or precisely characterize the failure, then identify the causal mechanism before changing behavior.
@@ -26,6 +28,8 @@ Choose verification proportional to risk:
 - Small code change: targeted tests plus formatter/linter if available.
 - Multi-file or behavior change: targeted tests, broader suite, type checks, lint, and documentation review.
 - Security or data-mutation change: add negative tests, boundary tests, and explicit rollback or recovery notes.
+
+Complete the project's required checks. Once they pass, broaden or repeat verification only when further changes, failures, or unresolved concerns justify it. Stop when the completion criteria are supported by fresh evidence.
 
 ## Clean Output
 

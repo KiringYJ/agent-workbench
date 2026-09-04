@@ -21,7 +21,7 @@ By default, those files are repository-tracked project configuration. Keep them 
 
 It does **not** require marketplace installs, global configuration, git submodules, plugins, or machine-local paths.
 
-The base profile includes compact, outcome-oriented prompt guidance derived from OpenAI's current [GPT-5.6 model guidance](https://developers.openai.com/api/docs/guides/model-guidance?model=gpt-5.6): state the goal, context, constraints, required evidence, success criteria, and output contract; keep autonomy boundaries in one place; and validate prompt changes on representative work. The canonical guidance remains vendor-neutral, so model-specific reasoning, verbosity, caching, and execution modes stay in vendor configuration.
+The base profile incorporates OpenAI's [GPT-6 Astra prompting guidance](https://developers.openai.com/api/docs/guides/latest-model/gpt-6-astra.md#prompting-best-practices), checked on 2026-09-05: complete authorized work, resolve instruction conflicts, communicate clearly, delegate useful independent work, and calibrate verification to the change. The canonical guidance remains vendor-neutral; model-specific settings stay in vendor configuration.
 
 ## Quick start
 
