@@ -135,6 +135,34 @@ unavailable runtime remains unavailable; this table does not substitute a
 different execution engine. Source-order rules apply to the skill handler's
 own work; unrelated parent work may continue independently.
 
+### OMX workflow compatibility
+
+Use the enabled skill catalog as the availability source. Removed workflow
+names are not executable aliases: select a current workflow from the requested
+outcome and retain any explicit user workflow boundary. Ordinary scoped work
+stays direct; durable multi-goal execution uses Ultragoal. Team is optional
+coordinated parallel work, not an automatic extra stage.
+
+Explicit Autopilot preserves `deep-interview -> ralplan -> ultragoal`, durable
+planning artifacts, sequential Architect/Critic reviews, and the session-bound
+execution handoff. Ordinary progression does not require a host-issued consensus
+receipt. Conductor-specific caller/parent/target proof applies only to an actual
+Conductor operation; it must not become a blanket Autopilot prerequisite.
+
+For Ultragoal finalization, the cleaner and independent code-reviewer/architect
+lanes remain mandatory. Run the cleaner on the changed files and inspect its
+result and diff. Reuse an accepted successful verification only when it covers
+the current goal and final behavior, and its relevant source, tests,
+configuration, dependencies, execution environment, and evidence validity are
+unchanged. A no-change cleaner result alone does not establish that coverage.
+Rerun affected checks for changed, uncovered, uncertain or time-sensitive inputs.
+Record the actual verification run and validity basis in the required quality
+gate evidence; do not fabricate a newer run. Complete the independent final
+reviews after cleanup, and repeat affected review if later edits invalidate a
+verdict. Preserve fresh goal snapshots, checkpoint receipts and all final gates.
+This reuse rule never substitutes for the journal pipeline's source-bound
+whole-manuscript final reviews.
+
 ### Skill assignments
 
 | Exact skill or explicit alias group | Model | Effort | Delivery | Stage or escalation |
@@ -159,15 +187,14 @@ own work; unrelated parent work may continue independently.
 | `hookify:source-command-configure`, `hookify:writing-hookify-rules` | `gpt-5.6-luna` | `max` | Parent-bound tool | Routine rule/configuration edits. Enforcement logic: `gpt-5.6-sol` / `medium`; difficult trust-boundary interactions: `gpt-5.6-sol` / `high`. |
 | `hookify:source-command-list` | `gpt-5.6-luna` | `max` | Parent-bound tool | Read-only listing and concise explanation. |
 | `oh-my-codex:ask` | `gpt-5.6-luna` | `max` | Parent-bound tool | Prepare the grounded advisor question; the external advisor has its own configuration. Evaluate technical claims with `gpt-5.6-sol` / `high`, mathematical claims with `gpt-6-astra` / `medium`, and critical proofs with `gpt-6-astra` / `max`. |
-| `oh-my-codex:autoresearch`, `oh-my-codex:autoresearch-goal` | `gpt-5.6-sol` | `high` | Leader workflow | Parent owns evaluator gates. Routine experiments: `gpt-5.6-sol` / `medium`; mathematical research: `gpt-6-astra` / `medium`; new formal proof search or high-failure-cost proof obligations: `gpt-6-astra` / `max`. |
+| `oh-my-codex:autoresearch` | `gpt-5.6-sol` | `high` | Leader workflow | Parent owns evaluator gates. Routine experiments: `gpt-5.6-sol` / `medium`; mathematical research: `gpt-6-astra` / `medium`; new formal proof search or high-failure-cost proof obligations: `gpt-6-astra` / `max`. |
 | `oh-my-codex:best-practice-research` | `gpt-5.6-luna` | `max` | Bounded child | Official-source retrieval and comparison. Implementation implications: `gpt-5.6-sol` / `medium`; material technical tradeoffs: `gpt-5.6-sol` / `high`; mathematical validity: `gpt-6-astra` / `medium`. |
 | `oh-my-codex:configure-notifications` | `gpt-5.6-luna` | `max` | Parent-bound tool | Requested configuration/status. Nontrivial provider failures: `gpt-5.6-sol` / `medium`. |
 | `oh-my-codex:design` | `gpt-5.6-sol` | `medium` | Leader workflow | Product/UI design: `gpt-5.6-sol` / `medium`; complex engineering tradeoffs: `gpt-5.6-sol` / `high`. Mathematical modeling decisions use `gpt-6-astra` / `medium`. |
 | `oh-my-codex:omx-setup`, `omx-setup` | `gpt-5.6-luna` | `max` | Parent-bound tool | Routine setup and configuration inspection. Technical diagnosis: `gpt-5.6-sol` / `medium`; difficult cross-runtime interactions: `gpt-5.6-sol` / `high`. |
 | `oh-my-codex:performance-goal` | `gpt-5.6-sol` | `high` | Leader workflow | Parent owns measurements and evaluator gates. Bounded implementation: `gpt-5.6-sol` / `medium`; difficult engineering: `gpt-5.6-sol` / `high`; mathematical correctness of an algorithm/model: `gpt-6-astra` / `medium`. Preserve measured acceptance criteria. |
-| `oh-my-codex:pipeline`, `oh-my-codex:ralph`, `ralph`, `oh-my-codex:ultragoal`, `oh-my-codex:ultrawork`, `ultrawork`, `oh-my-codex:ultraqa`, `ultraqa` | `gpt-5.6-sol` | `medium` | Leader workflow | Parent owns lifecycle state. Peripheral tasks: `gpt-5.6-luna` / `max`; nontrivial implementation: `gpt-5.6-sol` / `medium`; difficult integration: `gpt-5.6-sol` / `high`. Mathematical or critical-proof stages use `gpt-6-astra` / `medium` or `gpt-6-astra` / `max` directly. |
+| `oh-my-codex:ultragoal`, `oh-my-codex:ultraqa`, `ultraqa` | `gpt-5.6-sol` | `medium` | Leader workflow | Parent owns lifecycle state. Peripheral tasks: `gpt-5.6-luna` / `max`; nontrivial implementation: `gpt-5.6-sol` / `medium`; difficult integration: `gpt-5.6-sol` / `high`. Mathematical or critical-proof stages use `gpt-6-astra` / `medium` or `gpt-6-astra` / `max` directly. |
 | `oh-my-codex:plan`, `plan`, `oh-my-codex:ralplan`, `ralplan` | `gpt-5.6-sol` | `medium` | Leader workflow | Technical planning: `gpt-5.6-sol` / `medium`; difficult engineering criticism: `gpt-5.6-sol` / `high`. Research-math planning: `gpt-6-astra` / `medium`; critical proof strategy or a long lemma chain: `gpt-6-astra` / `max`. |
-| `oh-my-codex:prometheus-strict` | `gpt-5.6-sol` | `high` | Leader workflow | Keep interview, criticism, and synthesis parent-led. Engineering stages: `gpt-5.6-sol` / `high`; mathematical content: `gpt-6-astra` / `medium`; main-theorem or adversarial proof audit: `gpt-6-astra` / `max`. |
 | `oh-my-codex:skill` | `gpt-5.6-luna` | `max` | Parent-bound tool | Inspect/manage skills; installation and authoring use their respective rows. |
 | `oh-my-codex:team`, `team` | `gpt-5.6-sol` | `medium` | Leader workflow | Parent coordinates; classify worker stages separately. Peripheral: `gpt-5.6-luna` / `max`; technical: `gpt-5.6-sol` / `medium`; difficult integration: `gpt-5.6-sol` / `high`; mathematics: `gpt-6-astra` / `medium`; critical proof: `gpt-6-astra` / `max`. Host settings govern actual workers. |
 | `oh-my-codex:visual-ralph` | `gpt-5.6-sol` | `high` | Leader workflow | Visual iteration and nontrivial technical comparison: `gpt-5.6-sol` / `high`; routine visual fixes: `gpt-5.6-luna` / `max`. Preserve evidence and state; mathematical semantics follow the workload override. |

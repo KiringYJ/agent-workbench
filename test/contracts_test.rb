@@ -156,13 +156,13 @@ class WorkbenchContractsTest < Minitest::Test
       oh-my-codex:cancel ralph-loop:source-command-help
       ralph-loop:source-command-cancel-ralph hookify:source-command-configure
       hookify:writing-hookify-rules hookify:source-command-list oh-my-codex:ask
-      oh-my-codex:autoresearch oh-my-codex:autoresearch-goal
+      oh-my-codex:autoresearch
       oh-my-codex:best-practice-research oh-my-codex:configure-notifications
       oh-my-codex:design oh-my-codex:omx-setup omx-setup
-      oh-my-codex:performance-goal oh-my-codex:pipeline oh-my-codex:ralph ralph
+      oh-my-codex:performance-goal
       oh-my-codex:ultragoal
-      oh-my-codex:ultrawork ultrawork oh-my-codex:ultraqa ultraqa
-      oh-my-codex:plan plan oh-my-codex:ralplan ralplan oh-my-codex:prometheus-strict
+      oh-my-codex:ultraqa ultraqa
+      oh-my-codex:plan plan oh-my-codex:ralplan ralplan
       oh-my-codex:skill oh-my-codex:team team oh-my-codex:visual-ralph oh-my-codex:wiki
       oh-my-codex:worker security-review sites:sites-building sites:sites-hosting
       spreadsheets:excel-live-control template-creator:template-creator
@@ -172,7 +172,7 @@ class WorkbenchContractsTest < Minitest::Test
     ]
 
     assert_equal [], expected - routes, "known skills missing from routing table"
-    assert_equal 79, routes.length, "skill routing table must preserve all 79 skills and aliases"
+    assert_equal expected.sort, routes.sort, "routing must match the supported skill catalog exactly"
     assert_equal routes.uniq, routes, "each skill must resolve to exactly one row"
     assert_equal [], MANIFEST.fetch("portable_skills").keys - routes
     table.lines.grep(/^\| `[^`]+`/).each do |line|
