@@ -45,14 +45,60 @@ class WorkbenchContractsTest < Minitest::Test
     "tex" => %w[base prompting git repository-workspace security testing review workflows domains/research languages/tex]
   }.freeze
 
-  WORKLOAD_SELECTION = {
+  TIERS = %w[peripheral technical mixed research-math critical-proof].freeze
+  DELIVERY_MODES = ["Bounded child", "Leader workflow", "Parent-bound tool"].freeze
+  SKILL_TABLE_HEADER = "| Exact skill or explicit alias group | Tier | Delivery | Stage or escalation |"
+  CODEX_BINDING = "templates/codex.agent-routing.md.tpl"
+  CLAUDE_BINDING = "templates/claude.agent-routing.md.tpl"
+  CLAUDE_TIER_AGENTS = "templates/claude-agents"
+  PLATFORM_BINDINGS = {
+    ".claude/rules/agent-routing.md" => CLAUDE_BINDING,
+    ".codex/agent-routing.md" => CODEX_BINDING
+  }.freeze
+  CODEX_TIER_BINDING = {
     "peripheral" => ["gpt-5.6-luna", "max"],
     "technical" => ["gpt-5.6-sol", "medium"],
     "mixed" => ["gpt-5.6-sol", "high"],
     "research-math" => ["gpt-6-astra", "medium"],
     "critical-proof" => ["gpt-6-astra", "max"]
   }.freeze
-  ALLOWED_ROUTING_PAIRS = WORKLOAD_SELECTION.values.freeze
+  CLAUDE_TIER_BINDING = {
+    "peripheral" => ["haiku", nil],
+    "technical" => ["sonnet", "medium"],
+    "mixed" => ["sonnet", "high"],
+    "research-math" => ["opus", "high"],
+    "critical-proof" => ["fable", "max"]
+  }.freeze
+  CODEX_SKILL_ROUTES = %w[
+    imagegen openai-docs plugin-creator skill-creator skill-creator:skill-creator
+    skill-installer plugin-management:plugin-management ai-slop-cleaner
+    oh-my-codex:ai-slop-cleaner analyze oh-my-codex:analyze autopilot
+    oh-my-codex:autopilot claude-code-setup:claude-automation-recommender
+    claude-md-management:claude-md-improver
+    claude-md-management:source-command-revise-claude-md code-review
+    oh-my-codex:code-review computer-use:computer-use deep-interview
+    oh-my-codex:deep-interview deep-research-work:deep-research doctor
+    oh-my-codex:doctor documents:documents pdf:pdf presentations:Presentations
+    spreadsheets:Spreadsheets help oh-my-codex:hud
+    oh-my-codex:cancel ralph-loop:source-command-help
+    ralph-loop:source-command-cancel-ralph hookify:source-command-configure
+    hookify:writing-hookify-rules hookify:source-command-list oh-my-codex:ask
+    oh-my-codex:autoresearch
+    oh-my-codex:best-practice-research oh-my-codex:configure-notifications
+    oh-my-codex:design oh-my-codex:omx-setup omx-setup
+    oh-my-codex:performance-goal
+    oh-my-codex:ultragoal
+    oh-my-codex:ultraqa ultraqa
+    oh-my-codex:plan plan oh-my-codex:ralplan ralplan
+    oh-my-codex:skill oh-my-codex:team team oh-my-codex:visual-ralph oh-my-codex:wiki
+    oh-my-codex:worker security-review sites:sites-building sites:sites-hosting
+    spreadsheets:excel-live-control template-creator:template-creator
+    visualize:visualize web-clone
+  ].freeze
+  PLATFORM_SETTING_PATTERN = /
+    \bgpt-|\b(?:haiku|sonnet|opus|fable)\b|reasoning_effort|fork_turns|`(?:low|medium|high|xhigh|max)`|
+    oh-my-(?:codex|claudecode)|\b(?:OMX|OMC)\b|Ultragoal
+  /xi
 
   def test_every_manifest_path_exists
     registered_paths.each do |path|
@@ -136,86 +182,148 @@ class WorkbenchContractsTest < Minitest::Test
     end
   end
 
-  def test_skill_routing_table_covers_the_known_skill_catalog_and_portable_skills
-    table = skill_routing_text
-    routes = table.lines.grep(/^\| `[^`]+`/).flat_map do |line|
-      line.split("|").first(2).last.scan(/`([^`]+)`/).flatten
-    end
+  def test_shared_routing_names_tiers_without_platform_settings
+    routing = shared_routing_text
+    tiers = markdown_table(routing, "| Tier | Selection rule |").map(&:first)
+    bindings = markdown_table(routing, "| Runtime | Binding | Loading |").to_h { |cells| cells.first(2) }
 
-    expected = %w[
-      imagegen openai-docs plugin-creator skill-creator skill-creator:skill-creator
-      skill-installer plugin-management:plugin-management ai-slop-cleaner
-      oh-my-codex:ai-slop-cleaner analyze oh-my-codex:analyze autopilot
-      oh-my-codex:autopilot claude-code-setup:claude-automation-recommender
-      claude-md-management:claude-md-improver
-      claude-md-management:source-command-revise-claude-md code-review
-      oh-my-codex:code-review computer-use:computer-use deep-interview
-      oh-my-codex:deep-interview deep-research-work:deep-research doctor
-      oh-my-codex:doctor documents:documents pdf:pdf presentations:Presentations
-      spreadsheets:Spreadsheets help oh-my-codex:hud
-      oh-my-codex:cancel ralph-loop:source-command-help
-      ralph-loop:source-command-cancel-ralph hookify:source-command-configure
-      hookify:writing-hookify-rules hookify:source-command-list oh-my-codex:ask
-      oh-my-codex:autoresearch
-      oh-my-codex:best-practice-research oh-my-codex:configure-notifications
-      oh-my-codex:design oh-my-codex:omx-setup omx-setup
-      oh-my-codex:performance-goal
-      oh-my-codex:ultragoal
-      oh-my-codex:ultraqa ultraqa
-      oh-my-codex:plan plan oh-my-codex:ralplan ralplan
-      oh-my-codex:skill oh-my-codex:team team oh-my-codex:visual-ralph oh-my-codex:wiki
-      oh-my-codex:worker security-review sites:sites-building sites:sites-hosting
-      spreadsheets:excel-live-control template-creator:template-creator
-      visualize:visualize web-clone commit-workflow guardrail-authoring linus-review
-      integrate-chatgpt-conversation loop-until-done math-pdf-reader skill-authoring
-      sync-agent-workbench
-    ]
+    assert_equal TIERS.map { |tier| "`#{tier}`" }, tiers
+    refute_match PLATFORM_SETTING_PATTERN, routing
+    assert_includes bindings.fetch("Claude Code"), "`.claude/rules/agent-routing.md`"
+    assert_includes bindings.fetch("Claude Code"), "`.claude/agents/`"
+    assert_includes bindings.fetch("Codex"), "`.codex/agent-routing.md`"
+  end
 
-    assert_equal [], expected - routes, "known skills missing from routing table"
-    assert_equal expected.sort, routes.sort, "routing must match the supported skill catalog exactly"
+  def test_shared_skill_assignments_cover_exactly_the_portable_skills
+    rows = skill_assignments(shared_routing_text)
+    routes = rows.flat_map { |row| row.fetch(:routes) }
+
+    assert_equal MANIFEST.fetch("portable_skills").keys.sort, routes.sort
     assert_equal routes.uniq, routes, "each skill must resolve to exactly one row"
-    assert_equal [], MANIFEST.fetch("portable_skills").keys - routes
-    table.lines.grep(/^\| `[^`]+`/).each do |line|
-      fields = line.split("|").map(&:strip)
-      assert_match(/\A`gpt-[a-z0-9.-]+`\z/, fields.fetch(2))
-      assert_includes %w[`low` `medium` `high` `xhigh` `max` `ultra`], fields.fetch(3)
-      assert_includes ["Bounded child", "Leader workflow", "Parent-bound tool"], fields.fetch(4)
+    assert_valid_assignments rows
+  end
+
+  def test_codex_binding_maps_every_tier_and_owns_the_codex_skill_catalog
+    binding = (ROOT / CODEX_BINDING).read
+    mapping = markdown_table(binding, "| Tier | Model | Effort |").to_h do |cells|
+      [cells.fetch(0).delete("`"), [cells.fetch(1).delete("`"), cells.fetch(2).delete("`")]]
+    end
+    rows = skill_assignments(binding)
+    routes = rows.flat_map { |row| row.fetch(:routes) }
+
+    assert_equal TIERS, mapping.keys
+    assert_equal CODEX_TIER_BINDING, mapping
+    assert_equal CODEX_SKILL_ROUTES.sort, routes.sort, "routing must match the supported Codex skill catalog exactly"
+    assert_equal routes.uniq, routes, "each skill must resolve to exactly one row"
+    assert_empty routes & MANIFEST.fetch("portable_skills").keys, "portable skills belong in the shared guide"
+    assert_valid_assignments rows
+    %w[reasoning_effort fork_turns].each { |field| assert_includes binding, "`#{field}`" }
+    assert_includes binding, "agent-workbench: managed platform-binding"
+  end
+
+  def test_claude_binding_maps_every_tier_to_a_matching_subagent
+    binding = (ROOT / CLAUDE_BINDING).read
+    rows = markdown_table(binding, "| Tier | Model | Effort | Subagent |")
+    mapping = rows.to_h do |cells|
+      effort = cells.fetch(2) == "none" ? nil : cells.fetch(2).delete("`")
+      [cells.fetch(0).delete("`"), [cells.fetch(1).delete("`"), effort]]
+    end
+
+    assert_equal TIERS, mapping.keys
+    assert_equal CLAUDE_TIER_BINDING, mapping
+    assert_equal TIERS.map { |tier| "`tier-#{tier}`" }, rows.map { |cells| cells.fetch(3) }
+    assert_includes binding, "agent-workbench: managed platform-binding"
+
+    templates = Dir[ROOT / CLAUDE_TIER_AGENTS / "*.md.tpl"].map { |path| File.basename(path, ".md.tpl") }
+    assert_equal TIERS.map { |tier| "tier-#{tier}" }.sort, templates.sort
+    CLAUDE_TIER_BINDING.each do |tier, (model, effort)|
+      content = (ROOT / CLAUDE_TIER_AGENTS / "tier-#{tier}.md.tpl").read
+      frontmatter = YAML.safe_load(content.match(/\A---\n(.*?)\n---\n/m)[1])
+
+      assert_equal "tier-#{tier}", frontmatter.fetch("name")
+      refute_empty frontmatter.fetch("description")
+      assert_equal model, frontmatter.fetch("model")
+      effort ? assert_equal(effort, frontmatter.fetch("effort")) : refute(frontmatter.key?("effort"))
+      assert_equal "Agent", frontmatter.fetch("disallowedTools"), "tier workers must not delegate further"
+      expected_keys = %w[description disallowedTools model name] + (effort ? %w[effort] : [])
+      assert_equal expected_keys.sort, frontmatter.keys.sort
+      assert_includes content, "agent-workbench: managed platform-binding"
+      assert_includes content, "the `#{tier}` tier"
     end
   end
 
-  def test_workload_selection_table_maps_each_work_class_to_an_allowed_pair
-    selection = skill_routing_text.split("### Workload selection", 2).fetch(1)
-                           .split("| Exact skill or explicit alias group", 2).first
-    rows = selection.lines.map(&:strip).grep(/^\| (?:peripheral|technical|mixed|research-math|critical-proof) \|/)
-    mapping = rows.to_h do |line|
-      fields = line.split("|").map(&:strip)
-      [fields.fetch(1), [fields.fetch(2).delete("`"), fields.fetch(3).delete("`")]]
-    end
+  def test_stage_escalations_name_only_tiers
+    rows = skill_assignments(shared_routing_text) + skill_assignments((ROOT / CODEX_BINDING).read)
 
-    assert_includes selection.lines.map(&:strip), "| Work class | Model | Effort | Selection rule |"
-    assert_equal WORKLOAD_SELECTION, mapping
-    assert_equal WORKLOAD_SELECTION.length, rows.length
+    rows.each do |row|
+      references = row.fetch(:stage).scan(/`([^`]+)`/).flatten
+      assert_empty references - TIERS, "#{row.fetch(:routes).first} escalates to something other than a tier"
+    end
   end
 
-  def test_skill_routing_defaults_use_workload_selection_pairs
-    defaults = skill_routing_text.lines.grep(/^\| `[^`]+`/).map do |line|
-      fields = line.split("|").map(&:strip)
-      [fields.fetch(2).delete("`"), fields.fetch(3).delete("`")]
+  def test_portable_skills_route_through_bindings_without_platform_settings
+    MANIFEST.fetch("portable_skills").each do |name, registration|
+      skill = (ROOT / registration.fetch("path")).read
+      assert_includes skill.gsub(/\s+/, " "), "platform binding", "#{name} must resolve tiers through a binding"
+      refute_match PLATFORM_SETTING_PATTERN, skill, "#{name} carries platform-specific routing"
+    end
+  end
+
+  def test_managed_path_allowlists_name_every_platform_binding
+    sync = (ROOT / "prompts/sync-agent-workbench.md").read
+    allowlists = {
+      "sync write allowlist" => markdown_section(sync, "## Hard safety rules"),
+      "sync deletion scope" => markdown_section(sync, "### Generated artifact deletion scope"),
+      "repair allowlist" => markdown_section((ROOT / "prompts/repair-agent-workbench.md").read, "## Allowed repairs"),
+      "guide allowlist" => markdown_section((ROOT / "guide/security.md").read, "## Generated Instruction Files"),
+      "audit checks" => markdown_section((ROOT / "prompts/audit-agent-workbench.md").read, "## Checks")
+    }
+
+    allowlists.each do |name, section|
+      [".codex/agent-routing.md", ".claude/rules/agent-routing.md", ".claude/agents/"].each do |path|
+        assert_includes section, path, "#{name} omits #{path}"
+      end
+    end
+    bindings = markdown_section(sync, "## Platform routing bindings")
+    %w[targets.claude targets.codex].each { |target| assert_includes bindings, "`#{target}: true`" }
+  end
+
+  def test_platform_bindings_at_the_root_match_their_templates
+    PLATFORM_BINDINGS.each do |output, template|
+      assert_equal (ROOT / template).read, (ROOT / output).read, "#{output} differs from #{template}"
     end
 
-    assert_operator defaults.length, :>, 0
-    assert_empty defaults.reject { |pair| ALLOWED_ROUTING_PAIRS.include?(pair) }
+    templates = Dir[ROOT / CLAUDE_TIER_AGENTS / "*.md.tpl"].map { |path| File.basename(path, ".tpl") }
+    outputs = Dir[ROOT / ".claude/agents/*.md"].map { |path| File.basename(path) }
+    assert_equal templates.sort, outputs.sort
+    templates.each do |name|
+      assert_equal (ROOT / CLAUDE_TIER_AGENTS / "#{name}.tpl").read, (ROOT / ".claude/agents" / name).read
+    end
+  end
+
+  def test_sync_distributes_platform_bindings_by_target
+    sync = (ROOT / "prompts/sync-agent-workbench.md").read
+    [
+      "`templates/claude.agent-routing.md.tpl` -> `.claude/rules/agent-routing.md`",
+      "`templates/claude-agents/<name>.md.tpl` -> `.claude/agents/<name>.md`",
+      "`templates/codex.agent-routing.md.tpl` -> `.codex/agent-routing.md`",
+      "agent-workbench: managed platform-binding",
+      "`platform_binding`"
+    ].each { |fragment| assert_includes sync, fragment }
+
+    registered = MANIFEST.fetch("templates").transform_values { |entry| entry.fetch("path") }
+    assert_equal CLAUDE_BINDING, registered.fetch("claude_routing")
+    assert_equal CLAUDE_TIER_AGENTS, registered.fetch("claude_tier_agents")
+    assert_equal CODEX_BINDING, registered.fetch("codex_routing")
   end
 
   def test_conversation_integration_uses_a_mixed_leader_and_fail_closed_math_gate
-    row = skill_routing_text.lines.find do |line|
-      line.start_with?("| `integrate-chatgpt-conversation` |")
+    row = skill_assignments(shared_routing_text).find do |entry|
+      entry.fetch(:routes) == ["integrate-chatgpt-conversation"]
     end
     refute_nil row
-    fields = row.split("|").map(&:strip)
-    assert_equal "`gpt-5.6-sol`", fields.fetch(2)
-    assert_equal "`high`", fields.fetch(3)
-    assert_equal "Parent-bound tool", fields.fetch(4)
+    assert_equal "`mixed`", row.fetch(:tier)
+    assert_equal "Parent-bound tool", row.fetch(:delivery)
 
     skill = (ROOT / "skills/integrate-chatgpt-conversation/SKILL.md").read.gsub(/\s+/, " ")
     required_contracts = [
@@ -229,15 +337,6 @@ class WorkbenchContractsTest < Minitest::Test
       "Do not send the whole transcript or manuscript by default"
     ]
     required_contracts.each { |contract| assert_includes skill, contract }
-  end
-
-  def test_skill_routing_inline_stage_and_fallback_pairs_use_workload_selection_pairs
-    pairs = skill_routing_text.lines.filter_map do |line|
-      line.scan(/`(gpt-[a-z0-9.-]+)`[^`\n]*`(low|medium|high|xhigh|max|ultra)`/)
-    end.flatten(1)
-
-    assert_operator pairs.length, :>, 0
-    assert_empty pairs.reject { |pair| ALLOWED_ROUTING_PAIRS.include?(pair) }
   end
 
   def test_portable_skill_distribution_keeps_one_shared_core_and_a_claude_mirror
@@ -584,8 +683,43 @@ class WorkbenchContractsTest < Minitest::Test
 
   private
 
-  def skill_routing_text
+  def shared_routing_text
     (ROOT / "guide/workflows.md").read.split("## Skill Model and Reasoning Routing", 2).fetch(1)
+  end
+
+  def markdown_section(text, heading)
+    level = heading[/\A#+/].length
+    body = text.split("#{heading}\n", 2)
+    assert_equal 2, body.length, "missing section: #{heading}"
+    body.fetch(1).lines.take_while { |line| !line.match?(/\A\#{1,#{level}} /) }.join
+  end
+
+  def markdown_table(text, header)
+    lines = text.lines.map(&:strip)
+    start = lines.index(header)
+    refute_nil start, "missing table: #{header}"
+    lines.drop(start + 2).take_while { |line| line.start_with?("|") }.map do |line|
+      line.split("|").map(&:strip).drop(1)
+    end
+  end
+
+  def skill_assignments(text)
+    markdown_table(text, SKILL_TABLE_HEADER).map do |cells|
+      {
+        routes: cells.fetch(0).scan(/`([^`]+)`/).flatten,
+        tier: cells.fetch(1),
+        delivery: cells.fetch(2),
+        stage: cells.fetch(3)
+      }
+    end
+  end
+
+  def assert_valid_assignments(rows)
+    refute_empty rows
+    rows.each do |row|
+      assert_includes TIERS.map { |tier| "`#{tier}`" }, row.fetch(:tier), "#{row.fetch(:routes).first} has no known tier"
+      assert_includes DELIVERY_MODES, row.fetch(:delivery), "#{row.fetch(:routes).first} has no known delivery"
+    end
   end
 
   def install_fixture_workflows(consumer)

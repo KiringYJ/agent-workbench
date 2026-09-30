@@ -6,4 +6,6 @@ Codex discovers project Agent Skills under `.agents/skills/`. Keep optional Code
 
 Optional Codex configuration belongs in project-scoped `.codex/config.toml`. Do not depend on user-scope Codex configuration or machine-local paths.
 
+The Codex routing binding is `.codex/agent-routing.md`. The shared guide tells Codex to read it before selecting a model or effort or dispatching a child, so it stays out of the context of other runtimes.
+
 Keep `AGENTS.md` thin. The canonical policy belongs in `AI_AGENT_GUIDE.md`.

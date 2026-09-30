@@ -19,14 +19,14 @@ git status --short
 git diff --stat
 ```
 
-The suite verifies manifest paths, profile inheritance, generated-guide parity, thin entrypoints, portable skill frontmatter, executable v1 lockfile migration, exact managed-resource mirrors, and core sync safety contracts.
+The suite verifies manifest paths, profile inheritance, generated-guide parity, thin entrypoints, tier routing and platform bindings, portable skill frontmatter, executable v1 lockfile migration, exact managed-resource mirrors, and core sync safety contracts.
 
 ## Important Files and Directories
 
 - `manifest.yaml` — direct registry for modules, profiles, templates, prompts, and skills.
 - `guide/` — source modules for generated guides.
 - `profiles/` — module selection profiles.
-- `templates/` — files created in consumer projects.
+- `templates/` — files created in consumer projects, including the Claude Code and Codex routing bindings.
 - `prompts/` — LLM-executed sync, audit, repair, loop, guardrail, skill-authoring, and commit workflows.
 - `skills/` — portable Agent Skills copied to consumer projects under `.agents/skills/`.
 - `skills/sync-agent-workbench/scripts/` — dependency-free migration and managed-skill mirror verification helpers distributed with the sync skill.
@@ -38,6 +38,7 @@ The suite verifies manifest paths, profile inheritance, generated-guide parity, 
 - **Project guide**: `AI_AGENT_PROJECT.md`, manually maintained by each project.
 - **Thin entrypoint**: vendor-specific file that points to the canonical guides without duplicating them.
 - **Discovery mirror**: byte-identical generated copies of a standard skill's registered managed files placed in a vendor-required discovery path.
+- **Platform binding**: runtime-specific file that maps the guide's workload tiers to that runtime's models, effort levels, and child mechanisms.
 - **Profile**: YAML selection of modules for a language or project type.
 
 ## Workspace Configuration

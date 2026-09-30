@@ -15,6 +15,7 @@ A sync creates a small set of agent instruction files in your project:
 - `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` — thin entrypoints for vendor tools.
 - Project-scoped prompts and canonical Agent Skills under `.agents/`.
 - Generated `.claude/skills/` discovery mirrors when the Claude target is enabled; Codex, Gemini, and OpenCode use `.agents/skills/` directly.
+- Platform routing bindings that map the guide's five workload tiers to each runtime's models and effort levels: `.claude/rules/agent-routing.md` with tier subagents in `.claude/agents/` for Claude Code, and `.codex/agent-routing.md` for Codex.
 - `.agent-workbench.lock.json` — an agent-owned provenance ledger that records the last successful sync baseline.
 
 By default, those files are repository-tracked project configuration. Keep them in normal branch history so a clone receives the complete workspace and `main` remains the single source of truth for both product code and shared agent/editor setup.

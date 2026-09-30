@@ -77,6 +77,12 @@ templates:
     path: templates/opencode.json.tpl
   codex:
     path: templates/codex.config.toml.tpl
+  claude_routing:
+    path: templates/claude.agent-routing.md.tpl
+  claude_tier_agents:
+    path: templates/claude-agents
+  codex_routing:
+    path: templates/codex.agent-routing.md.tpl
   config:
     path: templates/agent-workbench.yaml.tpl
 

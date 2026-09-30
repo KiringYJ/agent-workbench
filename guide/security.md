@@ -34,6 +34,7 @@ The sync process may update only:
 - `GEMINI.md`
 - `opencode.json`
 - `.codex/config.toml`
+- Platform routing bindings: `.claude/rules/agent-routing.md` and tier subagents under `.claude/agents/` when the Claude target is enabled, and `.codex/agent-routing.md` when the Codex target is enabled
 - `.agent-workbench.yaml`
 - `.agent-workbench.lock.json` provenance ledger
 - Registered portable prompts under `.agents/prompts/`
