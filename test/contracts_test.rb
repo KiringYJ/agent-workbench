@@ -32,6 +32,7 @@ class WorkbenchContractsTest < Minitest::Test
 
     This file is generated from `agent-workbench` modules. Re-run the sync prompt to update it. Keep project-specific details in `AI_AGENT_PROJECT.md`.
   HEADER
+  MODULE_SEPARATOR = "\n\n---\n\n"
 
   PROFILE_MODULES = {
     "base" => %w[base prompting git repository-workspace security testing review workflows],
@@ -119,11 +120,27 @@ class WorkbenchContractsTest < Minitest::Test
   end
 
   def test_base_guide_matches_canonical_modules
-    module_body = resolve_profile("base").map do |name|
-      (ROOT / MANIFEST.fetch("modules").fetch(name).fetch("path")).read.strip
-    end.join("\n\n---\n\n")
+    assert_equal "#{MANAGED_HEADER}\n\n#{module_body("base")}\n", (ROOT / "AI_AGENT_GUIDE.md").read
+  end
 
-    assert_equal "#{MANAGED_HEADER}\n\n#{module_body}\n", (ROOT / "AI_AGENT_GUIDE.md").read
+  def test_guide_template_renders_the_canonical_guide
+    placeholders = {
+      "{{source}}" => "KiringYJ/agent-workbench",
+      "{{profile}}" => "base",
+      "{{manual_blocks}}" => "",
+      "{{modules}}" => module_body("base")
+    }
+    rendered = placeholders.reduce((ROOT / "templates/AI_AGENT_GUIDE.md.tpl").read) do |text, (placeholder, value)|
+      text.sub(placeholder) { value }
+    end
+
+    assert_equal (ROOT / "AI_AGENT_GUIDE.md").read, rendered
+  end
+
+  def test_sync_prompt_pins_the_canonical_module_separator
+    generation = markdown_section((ROOT / "prompts/sync-agent-workbench.md").read, "## AI_AGENT_GUIDE.md generation")
+    escaped = MODULE_SEPARATOR.gsub("\n", '\n') # the prompt spells newlines as \n
+    assert_includes generation, "`#{escaped}`"
   end
 
   def test_entrypoints_remain_thin_and_match_templates
@@ -685,6 +702,12 @@ class WorkbenchContractsTest < Minitest::Test
 
   def shared_routing_text
     (ROOT / "guide/workflows.md").read.split("## Skill Model and Reasoning Routing", 2).fetch(1)
+  end
+
+  def module_body(profile)
+    resolve_profile(profile).map do |name|
+      (ROOT / MANIFEST.fetch("modules").fetch(name).fetch("path")).read.strip
+    end.join(MODULE_SEPARATOR)
   end
 
   def markdown_section(text, heading)
