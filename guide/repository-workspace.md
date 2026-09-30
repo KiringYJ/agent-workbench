@@ -36,7 +36,7 @@ prompts/
 scripts/
 ```
 
-Classify optional paths before adding them. Keep personal preferences, caches, credentials, absolute machine paths, and local runtime state untracked.
+Classify optional paths before adding them. Keep personal preferences, caches, credentials, absolute machine paths, and local runtime state untracked. For Claude Code, that includes `CLAUDE.local.md`, `.claude/settings.local.json`, and `.claude/worktrees/`.
 
 ## Initial Setup
 
