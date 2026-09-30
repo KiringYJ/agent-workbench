@@ -36,6 +36,30 @@ class WorkbenchContractsTest < Minitest::Test
   MANUAL_NOTES_HEADING = "## Preserved Manual Notes\n\n"
   MANUAL_BLOCK_TERMINATOR = "\n\n"
   MANUAL_BLOCK = /<!-- agent-workbench:manual-begin -->.*?<!-- agent-workbench:manual-end -->/m
+  LEDGER_TABLE_HEADER = "| Kind | Scope | `id` | `name` | `sourcePath` | `markerVersion` |"
+  LEDGER_TOP_LEVEL_FIELDS = %w[
+    schemaVersion generatedAt source manifestDigest profile syncMode targets scopes installedArtifacts retainedRemovals
+  ].freeze
+  LEDGER_RECORD_FIELDS = %w[
+    id kind scope name sourcePath outputPath sourceChecksum lastAppliedOutputChecksum resourceManifest markerVersion profile managed
+  ].freeze
+  LEDGER_SCOPES = %w[guide entrypoints portable_prompts portable_skills].freeze
+  LEDGER_KIND_SCOPES = {
+    "guide" => "guide",
+    "entrypoint" => "entrypoints",
+    "vendor_config" => "entrypoints",
+    "platform_binding" => "entrypoints",
+    "portable_prompt" => "portable_prompts",
+    "portable_skill" => "portable_skills"
+  }.freeze
+  LEDGER_ID_PATTERNS = {
+    "guide" => "guide:AI_AGENT_GUIDE.md",
+    "entrypoint" => "entrypoint:<output path>",
+    "vendor_config" => "vendor_config:<output path>",
+    "platform_binding" => "platform_binding:<output path>",
+    "portable_prompt" => "portable_prompt:<name>",
+    "portable_skill" => "portable_skill:<name>"
+  }.freeze
 
   PROFILE_MODULES = {
     "base" => %w[base prompting git repository-workspace security testing review workflows],
@@ -340,6 +364,54 @@ class WorkbenchContractsTest < Minitest::Test
     assert_equal CODEX_BINDING, registered.fetch("codex_routing")
   end
 
+  def test_sync_prompt_pins_ledger_record_conventions
+    conventions, rows = ledger_conventions
+    provenance = markdown_section((ROOT / "prompts/sync-agent-workbench.md").read, "## Provenance ledger and removal detection")
+    example = JSON.parse(provenance[/```json\n(.*?)\n```/m, 1])
+    record = example.fetch("installedArtifacts").first
+    field_order = conventions[/^- Give every managed record these fields in this order: (.*)$/, 1].scan(/`([^`]+)`/).flatten - ["true"]
+
+    assert_equal LEDGER_TOP_LEVEL_FIELDS, example.keys
+    assert_equal LEDGER_SCOPES, example.fetch("scopes").keys
+    assert_equal LEDGER_RECORD_FIELDS, field_order
+    assert_equal LEDGER_RECORD_FIELDS, record.keys
+    assert_equal ledger_id(record), record.fetch("id")
+    record.fetch("resourceManifest").each { |entry| assert_equal %w[path sourceChecksum lastAppliedOutputChecksum], entry.keys }
+
+    assert_equal LEDGER_ID_PATTERNS.keys.sort, rows.keys.sort
+    LEDGER_KIND_SCOPES.each { |kind, scope| assert_equal "`#{scope}`", rows.fetch(kind).fetch(1) }
+    assert_equal "`AI_AGENT_GUIDE.md`", rows.fetch("guide").fetch(3)
+    assert_equal "`#{MANIFEST.dig("templates", "guide", "path")}`", rows.fetch("guide").fetch(4)
+    entrypoints, vendor_configs = conventions[/^- `entrypoint` records cover (.*)$/, 1].split("`vendor_config` records cover")
+    %w[CLAUDE.md AGENTS.md GEMINI.md].each { |path| assert_includes entrypoints, "`#{path}`" }
+    %w[opencode.json .codex/config.toml].each { |path| assert_includes vendor_configs, "`#{path}`" }
+    removal_fields = conventions[/^- A new `retainedRemovals` entry has (.*)$/, 1].scan(/`([^`]+)`/).flatten
+    assert_equal %w[id outputPath status recordedAt reason], removal_fields
+    LEDGER_ID_PATTERNS.each { |kind, pattern| assert_includes rows.fetch(kind).fetch(2), "`#{pattern}`" }
+    assert_includes rows.fetch("portable_skill").fetch(2), "`#{LEDGER_ID_PATTERNS.fetch("portable_skill")}:claude`"
+
+    sources = {
+      "guide" => [MANIFEST.dig("templates", "guide", "path")],
+      "entrypoint" => %w[claude agents gemini].map { |key| MANIFEST.dig("templates", key, "path") },
+      "vendor_config" => %w[opencode codex].map { |key| MANIFEST.dig("templates", key, "path") },
+      "platform_binding" => [CLAUDE_BINDING, CODEX_BINDING] +
+        Dir[ROOT / CLAUDE_TIER_AGENTS / "*.md.tpl"].map { |path| "#{CLAUDE_TIER_AGENTS}/#{File.basename(path)}" },
+      "portable_prompt" => MANIFEST.fetch("portable_prompts").values.map { |entry| entry.fetch("path") },
+      "portable_skill" => MANIFEST.fetch("portable_skills").values.map { |entry| entry.fetch("path") }
+    }
+    sources.each do |kind, paths|
+      marker = rows.fetch(kind).fetch(5).delete("`")
+      paths.each do |path|
+        text = (ROOT / path).read
+        if marker == "none"
+          refute_includes text, "agent-workbench: managed", "#{path} carries a marker its ledger kind does not record"
+        else
+          assert_includes text, marker, "#{path} lacks the #{kind} marker"
+        end
+      end
+    end
+  end
+
   def test_conversation_integration_uses_a_mixed_leader_and_fail_closed_math_gate
     row = skill_assignments(shared_routing_text).find do |entry|
       entry.fetch(:routes) == ["integrate-chatgpt-conversation"]
@@ -451,9 +523,14 @@ class WorkbenchContractsTest < Minitest::Test
       assert_equal original.fetch("installedArtifacts").last.fetch("localEditEvidence"),
                    claude_skill.fetch("localEditEvidence")
 
+      rows = ledger_conventions.last
       migrated.fetch("installedArtifacts").each do |artifact|
         refute artifact.key?("capability")
         refute artifact.key?("vendor")
+        next unless rows.key?(artifact.fetch("kind"))
+
+        assert_equal ledger_id(artifact), artifact.fetch("id")
+        assert_equal "`#{artifact.fetch("scope")}`", rows.fetch(artifact.fetch("kind")).fetch(1)
       end
     end
   end
@@ -595,6 +672,7 @@ class WorkbenchContractsTest < Minitest::Test
       _output, error, status = Open3.capture3(*command)
       assert status.success?, error
       assert_equal 2, JSON.parse(output_path.read).fetch("schemaVersion")
+      refute_includes output_path.binread, "\r", "the ledger candidate must use LF line endings on every platform"
 
       _output, error, status = Open3.capture3(*command)
       refute status.success?
@@ -725,6 +803,17 @@ class WorkbenchContractsTest < Minitest::Test
       "modules" => module_body(profile)
     }
     (ROOT / "templates/AI_AGENT_GUIDE.md.tpl").read.gsub(/\{\{(\w+)\}\}/) { values.fetch(Regexp.last_match(1)) }
+  end
+
+  def ledger_conventions
+    conventions = markdown_section((ROOT / "prompts/sync-agent-workbench.md").read, "### Ledger record conventions")
+    [conventions, markdown_table(conventions, LEDGER_TABLE_HEADER).to_h { |cells| [cells.first.delete("`"), cells] }]
+  end
+
+  def ledger_id(artifact)
+    id = LEDGER_ID_PATTERNS.fetch(artifact.fetch("kind"))
+                           .sub("<output path>", artifact.fetch("outputPath")).sub("<name>", artifact.fetch("name"))
+    artifact.fetch("outputPath").start_with?(".claude/skills/") ? "#{id}:claude" : id
   end
 
   def markdown_section(text, heading)
