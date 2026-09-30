@@ -33,6 +33,9 @@ class WorkbenchContractsTest < Minitest::Test
     This file is generated from `agent-workbench` modules. Re-run the sync prompt to update it. Keep project-specific details in `AI_AGENT_PROJECT.md`.
   HEADER
   MODULE_SEPARATOR = "\n\n---\n\n"
+  MANUAL_NOTES_HEADING = "## Preserved Manual Notes\n\n"
+  MANUAL_BLOCK_TERMINATOR = "\n\n"
+  MANUAL_BLOCK = /<!-- agent-workbench:manual-begin -->.*?<!-- agent-workbench:manual-end -->/m
 
   PROFILE_MODULES = {
     "base" => %w[base prompting git repository-workspace security testing review workflows],
@@ -124,23 +127,26 @@ class WorkbenchContractsTest < Minitest::Test
   end
 
   def test_guide_template_renders_the_canonical_guide
-    placeholders = {
-      "{{source}}" => "KiringYJ/agent-workbench",
-      "{{profile}}" => "base",
-      "{{manual_blocks}}" => "",
-      "{{modules}}" => module_body("base")
-    }
-    rendered = placeholders.reduce((ROOT / "templates/AI_AGENT_GUIDE.md.tpl").read) do |text, (placeholder, value)|
-      text.sub(placeholder) { value }
-    end
-
-    assert_equal (ROOT / "AI_AGENT_GUIDE.md").read, rendered
+    assert_equal (ROOT / "AI_AGENT_GUIDE.md").read, render_guide("base", [])
   end
 
-  def test_sync_prompt_pins_the_canonical_module_separator
+  def test_sync_prompt_pins_the_guide_layout
     generation = markdown_section((ROOT / "prompts/sync-agent-workbench.md").read, "## AI_AGENT_GUIDE.md generation")
-    escaped = MODULE_SEPARATOR.gsub("\n", '\n') # the prompt spells newlines as \n
-    assert_includes generation, "`#{escaped}`"
+    [MODULE_SEPARATOR, MANUAL_NOTES_HEADING, MANUAL_BLOCK_TERMINATOR].each do |literal|
+      escaped = literal.gsub("\n", '\n') # the prompt spells newlines as \n
+      assert_includes generation, "`#{escaped}`"
+    end
+  end
+
+  def test_manual_blocks_regenerate_idempotently
+    blocks = [
+      "<!-- agent-workbench:manual-begin -->\nKeep this local note.\n<!-- agent-workbench:manual-end -->",
+      "<!-- agent-workbench:manual-begin -->\n## Local Terms\n\n- `{{modules}}` stays literal here.\n<!-- agent-workbench:manual-end -->"
+    ]
+    rendered = render_guide("base", blocks)
+
+    assert_equal blocks, rendered.scan(MANUAL_BLOCK)
+    assert_equal rendered, render_guide("base", rendered.scan(MANUAL_BLOCK))
   end
 
   def test_entrypoints_remain_thin_and_match_templates
@@ -708,6 +714,17 @@ class WorkbenchContractsTest < Minitest::Test
     resolve_profile(profile).map do |name|
       (ROOT / MANIFEST.fetch("modules").fetch(name).fetch("path")).read.strip
     end.join(MODULE_SEPARATOR)
+  end
+
+  def render_guide(profile, manual_blocks)
+    notes = manual_blocks.empty? ? "" : MANUAL_NOTES_HEADING + manual_blocks.map { |block| block + MANUAL_BLOCK_TERMINATOR }.join
+    values = {
+      "source" => "KiringYJ/agent-workbench",
+      "profile" => profile,
+      "manual_blocks" => notes,
+      "modules" => module_body(profile)
+    }
+    (ROOT / "templates/AI_AGENT_GUIDE.md.tpl").read.gsub(/\{\{(\w+)\}\}/) { values.fetch(Regexp.last_match(1)) }
   end
 
   def markdown_section(text, heading)
