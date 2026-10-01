@@ -422,16 +422,34 @@ class WorkbenchContractsTest < Minitest::Test
 
     skill = (ROOT / "skills/integrate-chatgpt-conversation/SKILL.md").read.gsub(/\s+/, " ")
     required_contracts = [
+      "active host policy named by the project guide and its model-routing guidance",
       "mixed technical/editorial tier as the controller default",
       "explicitly limited to retrieval or literal extraction",
+      "retrieval, literal-extraction, synthesis, or review-only endpoint",
+      "file-update endpoint",
+      "separately requested repair endpoint",
+      "Unless the user excludes repair, that authority includes the one bounded local repair",
+      "does not authorize unrelated mathematical development",
+      "substantive mathematical assertion or verdict from a synthesis or review-only endpoint",
       "Fail-Closed Mathematical Integration",
       "must not certify the conversation's mathematics",
       "If classification is uncertain, trigger the audit",
-      "Before any mathematical edit",
-      "After an accepted mathematical edit",
-      "Do not send the whole transcript or manuscript by default"
+      "source-bound pre-audit packet",
+      "complete source-bound packet",
+      "Reuse the original adversarial reviewer for this ordinary recheck by default",
+      "fresh reviewer only for a main theorem, a possible fatal gap",
+      "exact claim, source proof and support, source locators, dependencies, and downstream uses remain unchanged",
+      "authorized file-update or repair endpoint",
+      "active normal research-mathematics tier",
+      "Do not commission this repair pass for a retrieval, synthesis, or review-only endpoint",
+      "do not establish an essential gap and do not bar feasible authorized reconstruction",
+      "read-only endpoint instead returns the reviewed disposition and task in its response",
+      "read-only response disposition records the same fields without writing them",
+      "read-only endpoints make no project changes"
     ]
     required_contracts.each { |contract| assert_includes skill, contract }
+    refute_match(/AI_AGENT_GUIDE\.md.*Skill Model and Reasoning Routing.*table/, skill)
+    refute_includes skill, "exactly one bounded local repair attempt used for each consolidated packet"
   end
 
   def test_portable_skill_distribution_keeps_one_shared_core_and_a_claude_mirror
