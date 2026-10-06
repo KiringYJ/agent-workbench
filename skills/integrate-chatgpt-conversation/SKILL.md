@@ -80,7 +80,52 @@ This includes ordinary conversation URLs and project, shared, or nested conversa
 4. If the browser redirects, accept the destination only when the page or connector explicitly associates it with the supplied conversation/project/share identity and the transcript evidence agrees. A similar title or a reused identifier alone is insufficient.
 5. Allow the page to hydrate and load older turns. A title, sidebar, loading shell, empty body, or newest-message-only view is incomplete.
 
-If native tools are unavailable, use the authenticated-browser route. If browser controls or authentication are unavailable, state that blocker rather than reconstructing the conversation from indirect evidence.
+If native tools are unavailable, use the authenticated-browser route. For a browser-session or initialization failure, attempt the bounded recovery below before declaring browser controls unavailable or requesting a replacement export. A genuine authentication or permission blocker is not a retry trigger; report it rather than reconstructing the conversation from indirect evidence.
+
+### Browser session recovery
+
+Errors such as `Debugger unattached` or a CDP dispatch deadline can reflect an
+attachment still being initialized as well as a failed attachment. The error
+text alone does not establish the cause. Use this recovery within the already
+authorized browser and conversation scope:
+
+1. Reuse the selected browser binding. If none exists, select the authorized
+   browser/profile and read its live API documentation. Name the browser
+   session before creating or claiming tabs when the provider requires it.
+2. Preserve user tabs, tab groups, and other chats' browser sessions. If the
+   source tab belongs to another chat, leave it there and create a tab owned by
+   the current chat using the exact source URL from the supplied reference or
+   observed matching tab. Keep the identity checks required above.
+3. Prefer separate, awaited operations: create an empty tab, navigate it to the
+   exact URL, then read its state. Avoid a combined create/navigate/initial-state
+   call on this fragile path. Use only methods exposed by the live provider;
+   for Codex Chrome, after browser setup and any required session naming:
+
+   ```javascript
+   const tab = await browser.tabs.new();
+   await tab.goto(exactConversationUrl);
+   const state = await tab.playwright.domSnapshot();
+   ```
+
+4. After a timeout, inspect documented inventory/ownership metadata before
+   another content command. Do not stack reads on a tab whose attachment may
+   still be initializing. A JavaScript REPL reset clears local bindings; it is
+   not evidence that remote initialization was cancelled or repaired. If the
+   failure persists, allow one fresh current-chat tab with the staged sequence
+   per unchanged failure condition. Preserve the prior user session and do not
+   restart applications, kill browser/native-host processes, reinstall
+   extensions, or broaden permissions as an automatic fallback.
+5. Call the browser recovered only when the exact conversation identity and
+   role-bearing body are inspectable. A loading shell still needs hydration;
+   tab inventory or titles alone are insufficient. Resume the completeness
+   procedure below, including history-start and per-item truncation checks.
+
+If the fresh staged attempt fails with the same error or reaches a genuine
+authentication, permission, missing-resource, or persistent-rendering blocker,
+stop this recovery loop, preserve the user's tabs, and report the exact boundary
+with the smallest replacement input needed. Do not claim full retrieval from
+the native preview. This retry limit applies to an unchanged connection failure,
+not to productive hydration, pagination, or extraction of newly loaded turns.
 
 ## Authenticated-Browser Completeness
 
