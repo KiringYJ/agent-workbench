@@ -6,6 +6,7 @@
 - Use the package manager selected by the existing lockfile. Do not switch package managers, repair dependencies implicitly, or allow a fallback runner to install packages without an explicit project decision.
 - Inspect the target component and its nearest visual peers before designing a material UI change. Reuse the project's established hierarchy, spacing, density, typography, surfaces, actions, and scrolling behavior.
 - Treat the project's design system and component library as the primary UI vocabulary. Prefer existing components and tokens over a parallel hand-written visual system.
+- Avoid unnecessary secondary labels and descriptions. Let the layout do the explaining.
 - Keep repository-specific rules in `AI_AGENT_PROJECT.md`, including exact validation commands, authoritative device-capability signals, expensive opt-in browser gates, and local service ports.
 
 ## Component and Markup Discipline
