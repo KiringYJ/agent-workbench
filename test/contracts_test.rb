@@ -84,9 +84,9 @@ class WorkbenchContractsTest < Minitest::Test
     ".codex/agent-routing.md" => CODEX_BINDING
   }.freeze
   CODEX_TIER_BINDING = {
-    "peripheral" => ["gpt-5.6-luna", "max"],
-    "technical" => ["gpt-5.6-sol", "medium"],
-    "mixed" => ["gpt-5.6-sol", "high"],
+    "peripheral" => ["gpt-6-luna", "max"],
+    "technical" => ["gpt-6.1-sol", "medium"],
+    "mixed" => ["gpt-6.1-sol", "high"],
     "research-math" => ["gpt-6-astra", "medium"],
     "critical-proof" => ["gpt-6-astra", "max"]
   }.freeze

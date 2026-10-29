@@ -9,8 +9,9 @@ selecting a model or effort or dispatching a child; other runtimes ignore it.
 
 ## Tier binding
 
-User-selected operating policy, adopted on 2026-09-07: optimize Codex allowance
-per successfully completed, verified unit of work while accounting for both
+User-selected operating policy, adopted on 2026-09-07 and updated on 2026-10-29:
+optimize Codex allowance per successfully completed, verified unit of work while
+accounting for both
 engineering and research-level mathematics. These are working allocations,
 not a measured universal Pareto frontier. Do not turn general intelligence
 scores or coding benchmark dollars into research-math capability rankings or
@@ -25,11 +26,35 @@ outcomes and host-reported usage when available.
 
 | Tier | Model | Effort |
 | --- | --- | --- |
-| `peripheral` | `gpt-5.6-luna` | `max` |
-| `technical` | `gpt-5.6-sol` | `medium` |
-| `mixed` | `gpt-5.6-sol` | `high` |
+| `peripheral` | `gpt-6-luna` | `max` |
+| `technical` | `gpt-6.1-sol` | `medium` |
+| `mixed` | `gpt-6.1-sol` | `high` |
 | `research-math` | `gpt-6-astra` | `medium` |
 | `critical-proof` | `gpt-6-astra` | `max` |
+
+## Terra specialization
+
+After classifying the stage, prefer `gpt-6.1-terra` with `medium` effort for:
+
+- Visual reading of PDF pages, charts, images, and screenshots, including layout
+  and visual QA.
+- Routine browser, desktop, and app operations grounded in supplied sources.
+- Clear writing, reports, and document organization from verified source material
+  or an already-established argument.
+
+This specialization overrides an eligible stage's model and effort within the
+five workload tiers. Mathematical classification takes precedence:
+`research-math` and `critical-proof` retain Astra. Nontrivial implementation and
+complex technical judgment retain the `technical` or `mixed` Sol binding.
+Text-only lookup, metadata, literal extraction, mechanical transformations, and
+test execution retain the peripheral Luna default.
+
+Preserve the skill's original instructions, delivery mode, independent reviews,
+and parent-bound sessions and authority. Apply Terra only where the runtime can
+honor the model selection; otherwise keep the current parent settings and report
+the recommended and actual configurations separately. This policy never switches
+the active parent. Validate the specialization with task outcomes, correction
+effort, elapsed time, and attributable host-reported usage.
 
 ## Dispatch
 
